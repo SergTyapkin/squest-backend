@@ -1,0 +1,5 @@
+Flask==2.0.1
+Werkzeug==2.0.1
+psycopg2==2.9.1
+requests==2.26.0
+gunicorn==19.9.0

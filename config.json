@@ -1,0 +1,10 @@
+{
+    "host": "localhost",
+    "port": 5432,
+    "user": "postgres",
+    "password": "root",
+    "database": "squest-site",
+
+    "api_port": "9000",
+    "debug": "True"
+}
