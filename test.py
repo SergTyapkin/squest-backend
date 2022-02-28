@@ -16,11 +16,11 @@ def respInfo(resp):
 
 
 def post(path, data):
-    respInfo(session.post(base_path + path, data=data))
+    respInfo(session.post(base_path + path, json=data))
 
 
 def put(path, data):
-    respInfo(session.put(base_path + path, data=data))
+    respInfo(session.put(base_path + path, json=data))
 
 
 def get(path):
@@ -32,25 +32,28 @@ def delete(path):
 
 
 if __name__ == '__main__':
+    # Create user
+    # post("/user", {
+    #     "name": "Serg",
+    #     "password": "root",
+    #     "university": "МГТУ",
+    #     "educationGroup": "РК6-62Б",
+    #     "groupRole": "student",
+    #     # "avatarUrl": "",
+    #     "email": "Tyapki2002@mail.ru",
+    # })
+    #
+    # get("/user")
+    #
+    # delete("/user/session")
+
     # Auth user
-    post("/user", {
-        "name": "Serg",
-        "password": "root",
-        "university": "МГТУ",
-        "educationGroup": "РК6-62Б",
-        "groupRole": "student",
-        # "avatarUrl": "",
-        "email": "Tyapki2002@mail.ru",
-    })
-
-    get("/user")
-
-    delete("/user/session")
-
     post("/user/auth", {
         "username": "Serg",
         "password": "root",
     })
+
+    get("/user")
 
     # Update user
     put("/user", {

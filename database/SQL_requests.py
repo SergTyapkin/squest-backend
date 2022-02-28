@@ -25,7 +25,7 @@ selectUserIdBySessionToken = \
     "SELECT userId FROM sessions " \
     "WHERE token = %s"
 
-selectSessionById = \
+selectSessionByUserId = \
     "SELECT token, expires FROM sessions " \
     "WHERE userId = %s"
 
@@ -75,6 +75,10 @@ updateUserPasswordByIdPassword = \
 
 
 # ----- DELETES -----
+deleteExpiredSessions = \
+    "DELETE FROM sessions "\
+    "WHERE expires <= NOW()"
+
 deleteUserById = \
     "DELETE FROM users "\
     "WHERE id = %s"
@@ -116,15 +120,15 @@ insertTask = \
 
 # ----- SELECTS -----
 selectPublishedQuestsByAuthor = \
-    "SELECT * FROM quests " \
+    "SELECT id, author, title, description FROM quests " \
     "WHERE author = %s AND isPublished = true"
 
 selectQuestById = \
-    "SELECT * FROM quests " \
+    "SELECT id, author, title, description FROM quests " \
     "WHERE id = %s"
 
 selectQuestsByAuthor = \
-    "SELECT * FROM quests " \
+    "SELECT id, author, title, description FROM quests " \
     "WHERE author = %s"
 
 selectPrivacyUsersIdByQuestId = \
@@ -132,7 +136,7 @@ selectPrivacyUsersIdByQuestId = \
     "WHERE questId = %s"
 
 selectPublishedQuests = \
-    "SELECT * FROM quests " \
+    "SELECT id, author, title, description FROM quests " \
     "WHERE isPublished = true"
 
 

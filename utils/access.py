@@ -80,9 +80,9 @@ def login_or_none(f):
 def login_or_none_return_id(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        userData = get_logined_user()
-        if not userData:
+        userId = get_logined_userid()
+        if not userId:
             return None
-        return f(*args, userData, **kwargs)
+        return f(*args, userId, **kwargs)
 
     return wrapper

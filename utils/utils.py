@@ -78,6 +78,6 @@ def html_prettify(headers: list, body: list, multilines: bool = False, row_oncli
 
 def jsonResponse(resp: dict or str, code: int = HTTP_OK):
     if isinstance(resp, str):
-        resp = {"info", resp}
+        resp = {"info": resp}
 
     return make_response(jsonify(resp), code)

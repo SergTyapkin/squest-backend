@@ -6,5 +6,7 @@
     "database": "squest-site",
 
     "api_port": "9000",
-    "debug": "True"
+    "debug": "True",
+
+    "cors-origins": ["http://127.0.0.1", "https://127.0.0.1"]
 }

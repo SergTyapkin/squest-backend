@@ -69,7 +69,7 @@ class Database:
 
         self.initialized = True
 
-    def execute(self, request: str, values: list[any] = [], toLists: bool = False) -> dict or (list, list):
+    def execute(self, request: str, values: list[any] = [], toLists: bool = False, manyResults: bool = False) -> dict or (list, list):
         try:
             cur = self.db.cursor()
             cur.execute(request, values)
@@ -92,19 +92,29 @@ class Database:
         try:
             # print(request)
             response = cur.fetchall().copy()
+            description = cur.description
+            cur.close()
             # print(response)
-            if not toLists:
-                if len(response) == 0:
+            if not toLists and not manyResults:
+                if len(response) == 0:  # Ничего не нашлось
                     return {}
-                response = dict(map(lambda key, val: (key[0], val), cur.description, response[0]))
-                cur.close()
+
+                response = dict(map(lambda key, val: (key[0], val), description, response[0]))
                 return response
+
             columns = [desc[0] for desc in cur.description]
+            if not manyResults:
+                return response, columns
+            # каждому элементу дописываем название его столбца
+            res = []
+            for row in response:
+                dic = {}
+                for i in range(len(row)):
+                    dic[columns[i]] = row[i]
+                res += [dic]
+            return res
         except psycopg2.ProgrammingError as err:
             print('\n/*/', request, '\n/*/', values, '\n/*/', err)
             if not toLists:
                 return {}
             return [], []
-
-        cur.close()
-        return response, columns

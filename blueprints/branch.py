@@ -13,16 +13,16 @@ _DB = Database(read_config("config.json"))
 @login_or_none_return_id
 def branchesGet(userId):
     try:
-        req = request.json
+        req = request.args
         questId = req['questId']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     # Если юзер залогинен и юзер - автор квеста
     if userId is not None and checkQuestAuthor(questId, userId, _DB)[0]:
-        resp = _DB.execute(sql.selectBranchesByQuestid, [questId])  # можно смотреть все ветки квеста
+        resp = _DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # можно смотреть все ветки квеста
     else:
-        resp = _DB.execute(sql.selectPublishedBranchesByQuestid, [questId])  # иначе - только опубликованные
+        resp = _DB.execute(sql.selectPublishedBranchesByQuestid, [questId], manyResults=True)  # иначе - только опубликованные
 
     return jsonResponse(resp)
 

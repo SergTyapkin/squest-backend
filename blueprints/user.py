@@ -13,17 +13,19 @@ _DB = Database(read_config("config.json"))
 
 
 def new_session(resp):
-    tokenResp = _DB.execute(sql.selectSessionById, [resp['id']])
+    tokenResp = _DB.execute(sql.selectSessionByUserId, [resp['id']])
     if len(tokenResp) > 0:
         token = tokenResp['token']
         expires = tokenResp['expires']
     else:
         token = str(uuid.uuid4())
-        expires = (datetime.now() + timedelta(seconds=24 * 60 * 60)).strftime("%Y-%m-%d %H:%M:%S")  # 24 * 60 * 60 = 1 day
+        expires = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
         _DB.execute(sql.insertSession, [resp['id'], token, expires])
 
+    _DB.execute(sql.deleteExpiredSessions)
+
     res = jsonResponse(resp)
-    res.set_cookie("session_token", token, expires=expires)
+    res.set_cookie("session_token", token, expires=expires, httponly=True, samesite="none", secure=True)
     return res
 
 
@@ -54,7 +56,9 @@ def userSessionDelete():
     except:
         return jsonResponse("Сессия не удалена", HTTP_INTERNAL_ERROR)
 
-    return jsonResponse("Вы вышли из аккаунта")
+    res = jsonResponse("Вы вышли из аккаунта")
+    res.set_cookie("session_token", "", max_age=-1, httponly=True, samesite="none", secure=True)
+    return res
 
 
 @app.route("")
@@ -67,7 +71,7 @@ def userGet(userData):
 def userCreate():
     try:
         req = request.json
-        name = req['name']
+        name = req['username']
         password = req['password']
         avatarUrl = req.get('avatarUrl')
         email = req.get('email')
@@ -87,7 +91,7 @@ def userCreate():
 def userUpdate(userData):
     try:
         req = request.json
-        name = req.get('name')
+        name = req.get('username')
         email = req.get('email')
         avatarUrl = req.get('avatarUrl')
     except:
@@ -125,5 +129,8 @@ def userUpdatePassword(userId):
     # if (userData['name'] != username) and (not userData['isadmin']):
     #     return jsonResponse("Нет прав", HTTP_NO_PERMISSIONS)
 
-    _DB.execute(sql.updateUserPasswordByIdPassword, [newPassword, userId, oldPassword])
+    resp = _DB.execute(sql.updateUserPasswordByIdPassword, [newPassword, userId, oldPassword])
+    if len(resp) == 0:
+        return jsonResponse("Пароль не подходит", HTTP_INVALID_AUTH_DATA)
+
     return jsonResponse("Успешно обновлено")

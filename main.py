@@ -9,9 +9,11 @@ from blueprints.task import app as task_app
 from middleware import Middleware
 from utils.utils import read_config
 
+_config = read_config('config.json')
+
 app = Flask(__name__)
 app.wsgi_app = Middleware(app.wsgi_app, url_prefix='/api',
-                          cors_origins=['http://127.0.0.1:8080'])
+                          cors_origins=_config['cors-origins'])
 
 app.register_blueprint(user_app,   url_prefix='/user')
 app.register_blueprint(admin_app,  url_prefix='/admin')
@@ -38,6 +40,5 @@ def error500(err):
 
 
 if __name__ == '__main__':
-    config = read_config('config.json')
-    port = int(os.environ.get('PORT', config['api_port']))
-    app.run(port=port, debug=bool(config['debug']))
+    port = int(os.environ.get('PORT', _config['api_port']))
+    app.run(port=port, debug=bool(_config['debug']))

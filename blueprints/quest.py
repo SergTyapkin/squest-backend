@@ -14,18 +14,18 @@ _DB = Database(read_config("config.json"))
 @login_or_none_return_id
 def questsGet(userId_logined):
     try:
-        req = request.json
+        req = request.args
         userId = req.get('userId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     if userId is not None:
-        resp = _DB.execute(sql.selectPublishedQuestsByAuthor, [userId])  # просмотр квестов определенного автора
-    else:
-        if userId_logined is not None:
-            resp = _DB.execute(sql.selectQuestsByAuthor, [userId_logined])  # просмотр всех своих квестов
+        if userId_logined == userId:
+            resp = _DB.execute(sql.selectQuestsByAuthor, [userId_logined], manyResults=True)  # просмотр всех своих квестов
         else:
-            resp = _DB.execute(sql.selectPublishedQuests, [])  # просмотр всех опубликованных квестов
+            resp = _DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
+    else:
+        resp = _DB.execute(sql.selectPublishedQuests, manyResults=True)  # просмотр всех опубликованных квестов
 
     return jsonResponse(resp)
 
