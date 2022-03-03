@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     isConfirmed      BOOLEAN DEFAULT FALSE,
     avatarUrl        TEXT DEFAULT NULL
     -- chosenQuestId    SERIAL -- will adds by ALTER in end
+    -- chosenBranchId   SERIAL -- will adds by ALTER in end
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -24,15 +25,16 @@ CREATE TABLE IF NOT EXISTS quests (
     description    TEXT DEFAULT NULL,
     createdDate    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     author         SERIAL NOT NULL REFERENCES users(id),
-    isPublished    BOOL NOT NULL DEFAULT false
+    isPublished    BOOL NOT NULL DEFAULT false,
+    isModerated    BOOL NOT NULL DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS progresses (
     userId       SERIAL NOT NULL REFERENCES users(id),
-    questId      SERIAL NOT NULL REFERENCES quests(id),
+    branchId      SERIAL NOT NULL REFERENCES branches(id),
     progress     INT NOT NULL DEFAULT 0,
     isFoundBonus BOOL NOT NULL DEFAULT FALSE,
-    UNIQUE (userId, questId)
+    UNIQUE (userId, branchId)
 );
 
 CREATE TABLE IF NOT EXISTS questsPrivacy (
@@ -52,6 +54,7 @@ CREATE TABLE IF NOT EXISTS branches (
 
 CREATE TABLE IF NOT EXISTS tasks (
     id             SERIAL PRIMARY KEY,
+    orderId        SERIAL,
     branchId       SERIAL NOT NULL REFERENCES branches(id),
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
@@ -81,6 +84,11 @@ BEGIN
         ALTER TABLE users ADD COLUMN
             ChosenQuestId SERIAL REFERENCES quests(id);
         ALTER TABLE users ALTER COLUMN ChosenQuestId
+            DROP NOT NULL;
+
+        ALTER TABLE users ADD COLUMN
+            ChosenBranchId SERIAL REFERENCES branches(id);
+        ALTER TABLE users ALTER COLUMN ChosenBranchId
             DROP NOT NULL;
     END IF;
 END;

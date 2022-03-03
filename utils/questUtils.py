@@ -3,6 +3,7 @@ from flask import make_response
 from constants import *
 import database.SQL_requests as sql
 from database.database import Database
+from utils.utils import jsonResponse
 
 
 def _checkAuthor(sqlRequest: str, args: list, fieldName: str, toCompare: any, DB: Database) -> (bool, dict or str):

@@ -16,11 +16,16 @@ def questsGet(userId_logined):
     try:
         req = request.args
         userId = req.get('userId')
+        questId = req.get('questId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
+    if questId is not None:
+        res, questData = checkQuestAuthor(questId, userId_logined, _DB)
+        return questData
+
     if userId is not None:
-        if userId_logined == userId:
+        if str(userId_logined) == userId:
             resp = _DB.execute(sql.selectQuestsByAuthor, [userId_logined], manyResults=True)  # просмотр всех своих квестов
         else:
             resp = _DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
@@ -37,10 +42,28 @@ def questCreate(userId):
         req = request.json
         title = req['title']
         description = req['description']
+        isPublished = req['isPublished']
+        branches = req['branches']
+        permissions = req['permissions']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.insertQuest, [title, description, userId])
+    resp = _DB.execute(sql.insertQuest, [title, description, userId, isPublished])
+    resp['branches'] = []  # list(map(lambda branchTitle: _DB.execute(sql.insertBranch, [resp['id'], branchTitle, ""]), branches))
+    for branchTitle in branches:
+        branchResp = _DB.execute(sql.insertBranch, [resp['id'], branchTitle, ""])
+        resp['branches'] += [branchResp]
+
+    resp['permissions'] = []
+    for perm in permissions:
+        permUser = _DB.execute(sql.selectUserByName, [perm['name']])
+        try:
+            permUserId = permUser['id']
+            permResp = _DB.execute(sql.insertPrivacy, [resp['id'], permUserId, perm['isInBlackList']])
+            resp['permissions'] += [permResp]
+        except KeyError:  # No user with that username
+            pass
+
     return jsonResponse(resp)
 
 
@@ -83,11 +106,25 @@ def questDelete(userId):
     return jsonResponse("Квест удален")
 
 
+@app.route("/choose", methods=["POST"])
+@login_required_return_id
+def questChoose(userId):
+    try:
+        req = request.json
+        questId = req['questId']
+        branchId = req['branchId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.updateUserChooseBranchByUserId, [questId, branchId, userId])
+    return jsonResponse(resp)
+
+
 @app.route("/privacy")
 @login_required_return_id
 def privacyGet(userId):
     try:
-        req = request.json
+        req = request.args
         questId = req['questId']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
@@ -95,7 +132,7 @@ def privacyGet(userId):
     res, questData = checkQuestAuthor(questId, userId, _DB)
     if not res: return questData
 
-    resp = _DB.execute(sql.selectPrivacyUsersIdByQuestId, [questId])
+    resp = _DB.execute(sql.selectPrivacyUserNamesByQuestId, [questId])
     return jsonResponse(resp)
 
 

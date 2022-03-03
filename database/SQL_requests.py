@@ -1,11 +1,11 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "id, name, email, isadmin, joineddate, isconfirmed, avatarurl"
+_userColumns = "id, name, email, isadmin, joineddate, isconfirmed, avatarurl, chosenquestid, chosenbranchid"
 # ----- INSERTS -----
 insertUser = \
-    "INSERT INTO users (name, password, avatarUrl, email, ChosenQuestId) " \
-    "VALUES (%s, %s, %s, %s, NULL) " \
+    "INSERT INTO users (name, password, avatarUrl, email, ChosenQuestId, ChosenBranchId) " \
+    "VALUES (%s, %s, %s, %s, NULL, NULL) " \
     f"RETURNING {_userColumns}"
 
 insertSession = \
@@ -20,6 +20,10 @@ selectUserByNamePassword = \
 selectUserById = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE id = %s"
+
+selectUserByName = \
+    f"SELECT {_userColumns} FROM users " \
+    "WHERE name = %s"
 
 selectUserIdBySessionToken = \
     "SELECT userId FROM sessions " \
@@ -94,16 +98,16 @@ deleteSessionByToken = \
 
 # ----- INSERTS -----
 insertQuest = \
-    "INSERT INTO quests (title, description, author) " \
-    "VALUES (%s, %s, %s) " \
-    f"RETURNING *"
+    "INSERT INTO quests (title, description, author, isPublished) " \
+    "VALUES (%s, %s, %s, %s) " \
+    "RETURNING *"
 
 insertProgress = \
-    "INSERT INTO progresses (userId, questId) " \
+    "INSERT INTO progresses (userId, branchId) " \
     "VALUES (%s, %s) " \
     "RETURNING * "
 
-insertQuestPrivacy = \
+insertPrivacy = \
     "INSERT INTO questsPrivacy (userId, questId, isInBlackList) " \
     "VALUES (%s, %s, %s) " \
     "RETURNING *"
@@ -128,11 +132,16 @@ selectQuestById = \
     "WHERE id = %s"
 
 selectQuestsByAuthor = \
-    "SELECT id, author, title, description FROM quests " \
+    "SELECT id, author, title, description, isPublished FROM quests " \
     "WHERE author = %s"
 
 selectPrivacyUsersIdByQuestId = \
     "SELECT userId, isInBlackList FROM questsPrivacy " \
+    "WHERE questId = %s"
+
+selectPrivacyUserNamesByQuestId = \
+    "SELECT users.name, isInBlackList FROM questsPrivacy " \
+    "JOIN users ON userId = users.id " \
     "WHERE questId = %s"
 
 selectPublishedQuests = \
@@ -141,13 +150,23 @@ selectPublishedQuests = \
 
 
 selectPublishedBranchesByQuestid = \
-    "SELECT branches.* FROM branches " \
-    "JOIN quests ON branches.questid = quests.id " \
-    "WHERE questId = %s AND quests.isPublished = true AND branches.isPublished = true"
+    "SELECT branches.*, count(tasks.id) as length FROM tasks " \
+    "RIGHT JOIN branches ON tasks.branchid = branches.id " \
+    "GROUP BY branches.id"
 
 selectBranchesByQuestid = \
     "SELECT * FROM branches " \
     "WHERE questId = %s"
+
+selectBranchById = \
+    "SELECT * FROM branches " \
+    "WHERE id = %s"
+
+selectBranchLengthById = \
+    "SELECT branches.*, count(tasks.id) as length FROM tasks " \
+    "JOIN branches ON tasks.branchid = branches.id " \
+    "WHERE branches.id = %s " \
+    "GROUP BY branches.id"
 
 selectQuestByBranchId = \
     "SELECT branches.*, quests.author, quests.ispublished as qispubliched FROM quests " \
@@ -156,7 +175,7 @@ selectQuestByBranchId = \
 
 
 selectQuestByTaskId = \
-    "SELECT tasks.*, branches.ispublished, quests.author, quests.ispublished as qispubliched FROM tasks " \
+    "SELECT tasks.id, tasks.title, tasks.description, tasks.question, branches.ispublished, quests.author, quests.ispublished as qispubliched FROM tasks " \
     "JOIN branches ON tasks.branchid = branches.id " \
     "JOIN quests ON branches.questid = quests.id " \
     "WHERE tasks.id = %s"
@@ -166,15 +185,31 @@ selectTasksByBranchid = \
     "WHERE branchid = %s"
 
 selectTasksByPublishedBranchid = \
-    "SELECT tasks.* FROM tasks " \
+    "SELECT tasks.id, tasks.title, tasks.description, tasks.question FROM tasks " \
     "JOIN branches ON tasks.branchid = branches.id " \
     "JOIN quests ON branches.questid = quests.id " \
     "WHERE branchid = %s AND quests.isPublished = true AND branches.isPublished = true"
 
+selectTaskByBranchidNumber = \
+    "SELECT id, title, description, question FROM tasks " \
+    "WHERE branchid = %s " \
+    "AND orderid = %s"
+
+selectProgressByUserid = \
+    "SELECT * FROM progresses " \
+    "WHERE userid = %s"
+
+checkTaskAnswerByBranchidAnswerProgress = \
+    "SELECT id FROM tasks " \
+    "WHERE branchid = %s " \
+    "AND array_position(answers, %s) IS NOT NULL " \
+    "AND orderid = %s"
+
 # ----- UPDATES -----
-updateUserChosenquestidByUserId = \
+updateUserChooseBranchByUserId = \
     "UPDATE users SET " \
-    "chosenQuestId = %s " \
+    "chosenQuestId = %s, " \
+    "chosenBranchId = %s " \
     "WHERE id = %s"
 
 updateQuestById = \
@@ -196,15 +231,15 @@ updatePrivacyIsInBlackListByQuestidUserid = \
     "isInBlackList = %s " \
     "WHERE questId = %s AND userId = %s"
 
-increaseProgressByUseridQuestid = \
+increaseProgressByUseridBranchid = \
     "UPDATE progresses SET " \
     "progress = progress + 1 " \
-    "WHERE userId = %s AND questId = %s"
+    "WHERE userId = %s AND branchId = %s"
 
-updateProgressByUseridQuestid = \
+updateProgressByUseridBranchid = \
     "UPDATE progresses SET " \
     "progress = %s " \
-    "WHERE userId = %s AND questId = %s"
+    "WHERE userId = %s AND branchId = %s"
 
 updateTaskById = \
     "UPDATE tasks SET " \
