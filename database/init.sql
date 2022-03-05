@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
-    userId   SERIAL NOT NULL REFERENCES users(id),
+    userId   SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token    TEXT NOT NULL UNIQUE,
     expires  TIMESTAMP WITH TIME ZONE
 );
@@ -30,23 +30,26 @@ CREATE TABLE IF NOT EXISTS quests (
 );
 
 CREATE TABLE IF NOT EXISTS progresses (
-    userId       SERIAL NOT NULL REFERENCES users(id),
-    branchId      SERIAL NOT NULL REFERENCES branches(id),
+    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    branchId     SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
     progress     INT NOT NULL DEFAULT 0,
+    maxProgress  INT NOT NULL DEFAULT 0,
     isFoundBonus BOOL NOT NULL DEFAULT FALSE,
     UNIQUE (userId, branchId)
 );
 
 CREATE TABLE IF NOT EXISTS questsPrivacy (
-    userId       SERIAL NOT NULL REFERENCES users(id),
-    questId      SERIAL NOT NULL REFERENCES quests(id),
+    id           SERIAL PRIMARY KEY,
+    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    questId      SERIAL NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
     isInBlackList  BOOL NOT NULL DEFAULT false,
     UNIQUE (userId, questId)
 );
 
 CREATE TABLE IF NOT EXISTS branches (
     id             SERIAL PRIMARY KEY,
-    questId        SERIAL NOT NULL REFERENCES quests(id),
+    orderId        SERIAL NOT NULL,
+    questId        SERIAL NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
     isPublished    BOOL NOT NULL DEFAULT false
@@ -55,24 +58,22 @@ CREATE TABLE IF NOT EXISTS branches (
 CREATE TABLE IF NOT EXISTS tasks (
     id             SERIAL PRIMARY KEY,
     orderId        SERIAL,
-    branchId       SERIAL NOT NULL REFERENCES branches(id),
+    branchId       SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
     question       TEXT DEFAULT NULL,
     answers        TEXT ARRAY NOT NULL
 );
 
-----------
--- DO $$
--- BEGIN
---     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_chosenquestid_fkey') THEN
---         ALTER TABLE users
---             ADD CONSTRAINT users_chosenquestid_fkey
---                 FOREIGN KEY (chosenQuestId) REFERENCES quests(id);
---     END IF;
--- END;
--- $$;
 
+CREATE TABLE IF NOT EXISTS images (
+    id             SERIAL PRIMARY KEY,
+    author         SERIAL REFERENCES users(id),
+    type           TEXT NOT NULL,
+    base64         TEXT NOT NULL
+);
+
+----------
 DO $$
 BEGIN
     IF NOT EXISTS(
@@ -82,14 +83,34 @@ BEGIN
           AND column_name = 'chosenquestid'
     ) THEN
         ALTER TABLE users ADD COLUMN
-            ChosenQuestId SERIAL REFERENCES quests(id);
+            ChosenQuestId SERIAL REFERENCES quests(id) ON DELETE SET NULL;
         ALTER TABLE users ALTER COLUMN ChosenQuestId
             DROP NOT NULL;
 
         ALTER TABLE users ADD COLUMN
-            ChosenBranchId SERIAL REFERENCES branches(id);
+            ChosenBranchId SERIAL REFERENCES branches(id) ON DELETE SET NULL;
         ALTER TABLE users ALTER COLUMN ChosenBranchId
             DROP NOT NULL;
     END IF;
 END;
 $$;
+
+
+
+--------
+CREATE OR REPLACE FUNCTION set_actual_max_progress() RETURNS TRIGGER AS
+$$
+BEGIN
+    IF NEW.progress > OLD.maxProgress THEN
+        NEW.maxprogress = NEW.progress;
+    END IF;
+
+    RETURN NEW;
+END
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS before_update ON progresses;
+CREATE TRIGGER before_update
+    BEFORE UPDATE ON progresses
+    FOR EACH ROW
+        EXECUTE PROCEDURE set_actual_max_progress();

@@ -24,7 +24,7 @@ class Middleware:
         # CORS
         def add_cors_headers(status, headers, exc_info=None):
             headers = Headers(headers)
-            if environ['HTTP_ORIGIN'] in self.cors_origins:
+            if environ.get('HTTP_ORIGIN') and environ['HTTP_ORIGIN'] in self.cors_origins:
                 headers.add("Access-Control-Allow-Origin", environ['HTTP_ORIGIN'])
             headers.add("Access-Control-Allow-Headers", "Content-type, X-CSRF-Token, Authorization")
             headers.add("Access-Control-Allow-Credentials", "true")

@@ -81,7 +81,7 @@ def userCreate():
     try:
         resp = _DB.execute(sql.insertUser, [name, password, avatarUrl, email])
     except:
-        return jsonResponse("Имя пользователя или email заняты", HTTP_ALREADY_REGISTERED)
+        return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
     return new_session(resp)
 

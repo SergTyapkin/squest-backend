@@ -6,6 +6,8 @@ from blueprints.admin import app as admin_app
 from blueprints.quest import app as quest_app
 from blueprints.branch import app as branch_app
 from blueprints.task import app as task_app
+from blueprints.image import app as image_app
+from blueprints.rating import app as rating_app
 from middleware import Middleware
 from utils.utils import read_config
 
@@ -20,6 +22,8 @@ app.register_blueprint(admin_app,  url_prefix='/admin')
 app.register_blueprint(quest_app,  url_prefix='/quest')
 app.register_blueprint(branch_app, url_prefix='/branch')
 app.register_blueprint(task_app,   url_prefix='/task')
+app.register_blueprint(image_app,   url_prefix='/image')
+app.register_blueprint(rating_app,   url_prefix='/rating')
 
 
 @app.route('/')

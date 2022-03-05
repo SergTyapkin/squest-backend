@@ -1,5 +1,4 @@
 from flask import Blueprint
-from markdown import markdown
 
 from utils.access import *
 from utils.questUtils import *
@@ -15,18 +14,27 @@ _DB = Database(read_config("config.json"))
 @login_required_return_id
 def tasksGet(userId):
     try:
-        req = request.json
-        branchId = req['branchId']
+        req = request.args
+        taskId = req.get('taskId')
+        branchId = req.get('branchId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    branchData = _DB.execute(sql.selectQuestByBranchId, [branchId])
+    # Нужно выдать таск по id
+    if taskId is not None:
+        isAuthor, taskData = checkTaskAuthor(taskId, userId, _DB)
+        if not isAuthor: return taskData
 
-    if branchData['author'] == userId:
-        resp = _DB.execute(sql.selectTasksByBranchid, [branchId])
+        return jsonResponse(taskData)
+    # Нужно выдать все таски ветки
+    elif branchId is not None:
+        # Можно смотреть только если юзер залогинен и юзер - автор ветки
+        if userId is None or not checkBranchAuthor(branchId, userId, _DB)[0]:
+            return jsonResponse("Вы не являетесь автором ветки", HTTP_NO_PERMISSIONS)
+        resp = _DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
         return jsonResponse(resp)
-
-    jsonResponse("Нет прав просмотра заданий в этой ветке", HTTP_NO_PERMISSIONS)  # нельзя
+    # Не пришло ни одного id
+    return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
 
 def getUserProgress(userData):
@@ -36,7 +44,7 @@ def getUserProgress(userData):
     except KeyError:  # прогресса нет - надо создать нулевой прогресс
         resp = _DB.execute(sql.insertProgress, [userData['id'], userData['chosenbranchid']])
         progress = resp['progress']
-    return progress + 1
+    return progress
 
 
 @app.route("/play")
@@ -45,19 +53,28 @@ def tasksGetLast(userData):
     if userData['chosenbranchid'] is None or userData['chosenquestid'] is None:
         return jsonResponse("Квест или ветка не выбраны", HTTP_INVALID_DATA)
 
-    progress = getUserProgress(userData)
-
-    # Можно получить только последний таск в выбранной ветке и квесте только если
-    # ветка и квест опубликованы (проверки на это нет)
-    resp = _DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
-    # Добавим к ответу названия квеста и ветки
     questResp = _DB.execute(sql.selectQuestById, [userData['chosenquestid']])
     branchResp = _DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
+    # Можно получить только последний таск в выбранной ветке и квесте только если
+    # ветка и квест опубликованы или юзер - автор
+    if questResp['author'] != userData['id'] and (questResp['ispublished'] or branchResp['ispublished']):
+        return jsonResponse("Выбранный квест или ветка не опубликованы, а вы не автор", HTTP_NO_PERMISSIONS)
+
+    progress = getUserProgress(userData)
+
+    resp = _DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
+    # Добавим к ответу названия квеста и ветки
     resp['questtitle'] = questResp['title']
     resp['branchtitle'] = branchResp['title']
     # Добавим к ответу прогресс и общую длину ветки
     resp['progress'] = progress
     resp['length'] = branchResp['length']
+
+    # Определим кол-во заданий, и уберем поле question, если задание - последнее
+    maxOrderid = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [userData['chosenbranchid']])
+    if maxOrderid['maxorderid'] == resp['orderid']:
+        del resp['question']
+
     return jsonResponse(resp)
 
 
@@ -89,16 +106,17 @@ def taskCreate(userId):
         title = req['title']
         description = req['description']
         question = req['question']
-        answers = req['answers']
+        answers = list(map(str.lower, req['answers']))
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     res, branchData = checkBranchAuthor(branchId, userId, _DB)
     if not res: return branchData
 
-    description = markdown(description)
+    resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [branchId])
+    maxOrderId = resp['maxorderid']
 
-    resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers])
+    resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId])
     return jsonResponse(resp)
 
 
@@ -108,6 +126,7 @@ def taskUpdate(userId):
     try:
         req = request.json
         taskId = req['id']
+        orderId = req.get('orderId')
         title = req.get('title')
         description = req.get('description')
         question = req.get('question')
@@ -120,15 +139,15 @@ def taskUpdate(userId):
 
     title = title or taskData['title']
     question = question or taskData['question']
-    answers = answers or taskData['answers']
-
-    if description:
-        description = markdown(description)
+    if answers is not None:
+        answers = list(map(str.lower, answers))
     else:
-        description = taskData['description']
+        answers = taskData['answers']
+    description = description or taskData['description']
+    orderId = orderId or taskData['orderid']
 
-    _DB.execute(sql.updateTaskById, [title, description, question, answers, taskId])
-    return jsonResponse("Задание обновлено")
+    resp = _DB.execute(sql.updateTaskById, [orderId, title, description, question, answers, taskId])
+    return jsonResponse(resp)
 
 
 @app.route("", methods=["DELETE"])
@@ -144,4 +163,13 @@ def taskDelete(userId):
     if not res: return taskData
 
     _DB.execute(sql.deleteTaskById, [taskId])
-    return jsonResponse("Задание удалено")
+
+    # Make orderids actual
+    branchId = taskData['branchid']
+    resp = _DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # получаем все ветки
+    idx = 1
+    for task in resp:
+        if task['orderid'] != idx:
+            resp[idx-1] = _DB.execute(sql.updateTaskOrderidById, [idx, task['id']])
+        idx += 1
+    return jsonResponse(resp)
