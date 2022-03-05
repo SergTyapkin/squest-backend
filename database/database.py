@@ -4,11 +4,11 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 class Database:
     def __new__(cls, config):
-        if hasattr(cls, 'instance'):
-            return cls.instance
-        cls.config = config
-        cls.init(cls)
-        cls.instance = super(Database, cls).__new__(cls)
+        if not hasattr(cls, 'instance'):
+            cls.config = config
+            cls.init(cls)
+            cls.instance = super(Database, cls).__new__(cls)
+        return cls.instance
 
     def init(self):
         config = self.config
