@@ -174,7 +174,7 @@ selectBranchById = \
 
 selectBranchLengthById = \
     "SELECT branches.*, count(tasks.id) as length FROM tasks " \
-    "JOIN branches ON tasks.branchid = branches.id " \
+    "RIGHT JOIN branches ON tasks.branchid = branches.id " \
     "WHERE branches.id = %s " \
     "GROUP BY branches.id"
 
@@ -187,13 +187,13 @@ selectTaskMaxOrderidByBranchid = \
     "WHERE branchid = %s"
 
 selectQuestByBranchId = \
-    "SELECT branches.*, quests.author, quests.ispublished as qispubliched FROM quests " \
+    "SELECT branches.*, quests.author, quests.ispublished as qispublished, quests.title as qtitle FROM quests " \
     "JOIN branches ON branches.questId = quests.id " \
     "WHERE branches.id = %s"
 
 
 selectQuestByTaskId = \
-    "SELECT tasks.*, branches.ispublished as bispublished, quests.author, quests.ispublished as qispublished FROM tasks " \
+    "SELECT tasks.*, branches.ispublished as bispublished, branches.title as btitle, quests.author, quests.ispublished as qispublished FROM tasks " \
     "JOIN branches ON tasks.branchid = branches.id " \
     "JOIN quests ON branches.questid = quests.id " \
     "WHERE tasks.id = %s"
@@ -215,9 +215,15 @@ selectTaskByBranchidNumber = \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
 
-selectProgressByUserid = \
+selectTaskAnswersByBranchidNumber = \
+    "SELECT answers FROM tasks " \
+    "WHERE branchid = %s " \
+    "ORDER BY orderid " \
+    "OFFSET %s LIMIT 1"
+
+selectProgressByUseridBranchid = \
     "SELECT * FROM progresses " \
-    "WHERE userid = %s"
+    "WHERE userid = %s AND branchid = %s"
 
 selectRatings = \
     "SELECT sum(progresses.maxprogress) as rating, users.id, users.name " \
@@ -225,12 +231,6 @@ selectRatings = \
     "GROUP BY users.id " \
     "ORDER BY rating"
 
-checkTaskAnswerByBranchidAnswerProgress = \
-    "SELECT id FROM tasks " \
-    "WHERE branchid = %s " \
-    "AND array_position(answers, %s) IS NOT NULL " \
-    "ORDER BY orderid " \
-    "OFFSET %s LIMIT 1"
 
 # ----- UPDATES -----
 updateUserChooseBranchByUserId = \
@@ -278,12 +278,14 @@ updatePrivacyByIdQuestid = \
 increaseProgressByUseridBranchid = \
     "UPDATE progresses SET " \
     "progress = progress + 1 " \
-    "WHERE userId = %s AND branchId = %s"
+    "WHERE userId = %s AND branchId = %s " \
+    "RETURNING *"
 
 updateProgressByUseridBranchid = \
     "UPDATE progresses SET " \
     "progress = %s " \
-    "WHERE userId = %s AND branchId = %s"
+    "WHERE userId = %s AND branchId = %s " \
+    "RETURNING *"
 
 updateTaskById = \
     "UPDATE tasks SET " \

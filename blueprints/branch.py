@@ -21,9 +21,15 @@ def branchesGet(userId):
 
     # Нужно выдать ветку по id
     if branchId is not None:
-        isAuthor, branchData = checkBranchAuthor(branchId, userId, _DB)
+        branchData = _DB.execute(sql.selectQuestByBranchId, [branchId])
         # Если юзер залогинен и юзер - автор квеста ветки
-        if branchData['ispublished'] or isAuthor:
+        if branchData['ispublished'] or branchData['author'] == userId:
+            # Добавим прогресс пользователя
+            resp = _DB.execute(sql.selectProgressByUseridBranchid, [userId, branchId])
+            branchData['progress'] = resp.get('maxprogress') or 0
+            # Добавим длину ветки
+            resp = _DB.execute(sql.selectBranchLengthById, [branchId])
+            branchData['length'] = max(resp['length'] - 1, 0)
             return jsonResponse(branchData)
         else:
             return jsonResponse("Ветка не опубликована, а вы не автор", HTTP_NO_PERMISSIONS)
@@ -53,9 +59,32 @@ def branchCreate(userId):
     if not res: return questData
 
     resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
-    maxOrderId = resp['maxorderid']
+    maxOrderId = resp['maxorderid'] or 0
 
     resp = _DB.execute(sql.insertBranch, [questId, title, description, maxOrderId + 1])
+    return jsonResponse(resp)
+
+
+@app.route("/many", methods=["POST"])
+@login_required_return_id
+def branchCreateMany(userId):
+    try:
+        req = request.json
+        questId = req['questId']
+        branches = req['branches']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    res, questData = checkQuestAuthor(questId, userId, _DB)
+    if not res: return questData
+
+    resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
+    maxOrderId = resp['maxorderid'] or 0
+
+    resp = []
+    for branch in branches:
+        maxOrderId += 1
+        resp += [_DB.execute(sql.insertBranch, [questId, branch['title'], branch['description'], maxOrderId])]
     return jsonResponse(resp)
 
 
@@ -108,3 +137,17 @@ def branchDelete(userId):
         idx += 1
 
     return jsonResponse(resp)
+
+
+@app.route("/progress/reset", methods=["PUT"])
+@login_required_return_id
+def progressReset(userId):
+    try:
+        req = request.json
+        branchId = req['branchId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.updateProgressByUseridBranchid, [0, userId, branchId])
+    return jsonResponse(resp)
+

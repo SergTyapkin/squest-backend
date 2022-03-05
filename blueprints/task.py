@@ -37,8 +37,8 @@ def tasksGet(userId):
     return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
 
-def getUserProgress(userData):
-    resp = _DB.execute(sql.selectProgressByUserid, [userData['id']])
+def getOrCreateUserProgress(userData):
+    resp = _DB.execute(sql.selectProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
     try:
         progress = resp['progress']
     except KeyError:  # прогресса нет - надо создать нулевой прогресс
@@ -57,10 +57,10 @@ def tasksGetLast(userData):
     branchResp = _DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
     # Можно получить только последний таск в выбранной ветке и квесте только если
     # ветка и квест опубликованы или юзер - автор
-    if questResp['author'] != userData['id'] and (questResp['ispublished'] or branchResp['ispublished']):
+    if questResp['author'] != userData['id'] and (not questResp['ispublished'] or not branchResp['ispublished']):
         return jsonResponse("Выбранный квест или ветка не опубликованы, а вы не автор", HTTP_NO_PERMISSIONS)
 
-    progress = getUserProgress(userData)
+    progress = getOrCreateUserProgress(userData)
 
     resp = _DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
     # Добавим к ответу названия квеста и ветки
@@ -83,18 +83,19 @@ def tasksGetLast(userData):
 def tasksCheckAnswer(userData):
     try:
         req = request.json
-        answer = req['answer'].lower()
+        userAnswer = req['answer'].lower()
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    progress = getUserProgress(userData)
+    progress = getOrCreateUserProgress(userData)
 
-    taskId = _DB.execute(sql.checkTaskAnswerByBranchidAnswerProgress, [userData['chosenbranchid'], answer, progress])
-    if not taskId:
-        return jsonResponse("Ответ неверен", HTTP_ANSWER_MISS)
+    task = _DB.execute(sql.selectTaskAnswersByBranchidNumber, [userData['chosenbranchid'], progress])
+    for answer in task['answers']:
+        if answer == userAnswer:
+            resp = _DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
+            return jsonResponse(resp)
 
-    _DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
-    return jsonResponse("Правильно")
+    return jsonResponse("Ответ неверен", HTTP_ANSWER_MISS)
 
 
 @app.route("", methods=["POST"])
