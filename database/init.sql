@@ -29,15 +29,6 @@ CREATE TABLE IF NOT EXISTS quests (
     isModerated    BOOL NOT NULL DEFAULT false
 );
 
-CREATE TABLE IF NOT EXISTS progresses (
-    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    branchId     SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    progress     INT NOT NULL DEFAULT 0,
-    maxProgress  INT NOT NULL DEFAULT 0,
-    isFoundBonus BOOL NOT NULL DEFAULT FALSE,
-    UNIQUE (userId, branchId)
-);
-
 CREATE TABLE IF NOT EXISTS questsPrivacy (
     id           SERIAL PRIMARY KEY,
     userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -53,6 +44,15 @@ CREATE TABLE IF NOT EXISTS branches (
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
     isPublished    BOOL NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS progresses (
+    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    branchId     SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+    progress     INT NOT NULL DEFAULT 0,
+    maxProgress  INT NOT NULL DEFAULT 0,
+    isFoundBonus BOOL NOT NULL DEFAULT FALSE,
+    UNIQUE (userId, branchId)
 );
 
 CREATE TABLE IF NOT EXISTS tasks (

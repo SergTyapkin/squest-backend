@@ -3,14 +3,12 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
 class Database:
-    initialized = False
-
     def __new__(cls, config):
-        if not hasattr(cls, 'instance'):
-            cls.config = config
-            cls.init(cls)
-            cls.instance = super(Database, cls).__new__(cls)
-        return cls.instance
+        if hasattr(cls, 'instance'):
+            return cls.instance
+        cls.config = config
+        cls.init(cls)
+        cls.instance = super(Database, cls).__new__(cls)
 
     def init(self):
         config = self.config
@@ -23,6 +21,7 @@ class Database:
                 dbname=config["database"]
             )
             self.db.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+            print("Подключение к базе данных успешно")
         except psycopg2.OperationalError as err:
             print('\n/*/', err)
             if err.args[0] == 2003:
@@ -52,6 +51,8 @@ class Database:
                     return
                 finally:
                     self.cursor.close()
+            else:
+                print('Неизвестная ошибка при подключении к БД')
             exit()
             return
 
@@ -67,7 +68,6 @@ class Database:
             print('\n/*/', error)
             return
 
-        self.initialized = True
 
     def execute(self, request: str, values: list[any] = [], toLists: bool = False, manyResults: bool = False) -> dict or (list, list):
         try:
