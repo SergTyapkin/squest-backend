@@ -8,5 +8,5 @@
     "api_port": "9000",
     "debug": "False",
 
-    "cors-origins": ["http://127.0.0.1", "https://127.0.0.1"]
+    "cors-origins": ["http://127.0.0.1", "https://127.0.0.1", "http://squest.herokuapp.com", "https://squest.herokuapp.com"]
 }
