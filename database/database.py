@@ -21,7 +21,6 @@ class Database:
                 dbname=config["database"]
             )
             self.db.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-            print("Подключение к базе данных успешно")
         except psycopg2.OperationalError as err:
             print('\n/*/', err)
             if err.args[0] == 2003:
