@@ -14,6 +14,8 @@ _DB = Database(read_config("config.json"))
 @app.route("/<imageId>")
 def imageGet(imageId):
     resp = _DB.execute(sql.selectImageById, [imageId])
+    if not resp:
+        return Response("Изображение не найдено", HTTP_NOT_FOUND)
     base64Data = resp['base64']
     imageBytes = base64.b64decode(base64Data)
     return Response(imageBytes, mimetype=f'image/{resp["type"]}')

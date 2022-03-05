@@ -24,3 +24,19 @@ def userUpdateConfirmation():
         return jsonResponse("Имя пользователя не найдено", HTTP_NOT_FOUND)
 
     return jsonResponse("Успешно обновлено")
+
+
+@app.route("/sql", methods=["POST"])
+@login_required_admin
+def executeSQL():
+    try:
+        req = request.json
+        sqlText = req['sql']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    try:
+        resp = _DB.execute(sqlText, manyResults=True)
+        return jsonResponse(resp)
+    except Exception as err:
+        return jsonResponse(str(err), HTTP_INTERNAL_ERROR)

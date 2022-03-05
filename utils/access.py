@@ -59,7 +59,7 @@ def login_required_admin(f):
         userData = get_logined_user()
         if not userData:
             return jsonResponse("Не авторизован", HTTP_INVALID_AUTH_DATA)
-        if userData['isadmin']:
+        if not userData['isadmin']:
             return jsonResponse("Нет прав админа", HTTP_NO_PERMISSIONS)
         return f(*args, **kwargs)
 
