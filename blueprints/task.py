@@ -117,7 +117,7 @@ def taskCreate(userId):
     resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [branchId])
     maxOrderId = resp['maxorderid'] or 0
 
-    resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId])
+    resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId + 1])
     return jsonResponse(resp)
 
 
