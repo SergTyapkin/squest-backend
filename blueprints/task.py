@@ -114,7 +114,7 @@ def taskCreate(userId):
     res, branchData = checkBranchAuthor(branchId, userId, _DB)
     if not res: return branchData
 
-    resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [branchId])
+    resp = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
     maxOrderId = resp['maxorderid'] or 0
 
     resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId + 1])
