@@ -91,7 +91,7 @@ def tasksCheckAnswer(userData):
 
     task = _DB.execute(sql.selectTaskAnswersByBranchidNumber, [userData['chosenbranchid'], progress])
     for answer in task['answers']:
-        if answer == userAnswer:
+        if answer == userAnswer or answer == '*':  # если настроен ответ '*' - принимается любой ответ
             resp = _DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
             return jsonResponse(resp)
 
