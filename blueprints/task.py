@@ -68,7 +68,7 @@ def tasksGetLast(userData):
     resp['branchtitle'] = branchResp['title']
     # Добавим к ответу прогресс и общую длину ветки
     resp['progress'] = progress
-    resp['length'] = branchResp['length']
+    resp['length'] = max(branchResp['length'] - 1, 0)
 
     # Определим кол-во заданий, и уберем поле question, если задание - последнее
     maxOrderid = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [userData['chosenbranchid']])
