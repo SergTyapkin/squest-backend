@@ -29,7 +29,7 @@ class Middleware:
             headers.add("Access-Control-Allow-Headers", "Content-type, X-CSRF-Token, Authorization")
             headers.add("Access-Control-Allow-Credentials", "true")
             headers.add("Access-Control-Allow-Methods", self.cors_methods)
-            headers.add("Access-Control-Expose-Headers", "")
+            headers.add("Access-Control-Expose-Headers", "Set-Cookie")
             return start_response(status, list(headers), exc_info)
 
         if environ.get("REQUEST_METHOD") == "OPTIONS":
