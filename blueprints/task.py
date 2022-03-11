@@ -71,7 +71,7 @@ def tasksGetLast(userData):
     resp['length'] = max(branchResp['length'] - 1, 0)
 
     # Определим кол-во заданий, и уберем поле question, если задание - последнее
-    maxOrderid = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [userData['chosenbranchid']])
+    maxOrderid = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [userData['chosenbranchid']])
     if maxOrderid['maxorderid'] == resp['orderid']:
         del resp['question']
 
