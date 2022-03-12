@@ -15,5 +15,6 @@
         "https://squest.herokuapp.com",
         "http://squest.ml",
         "https://squest.ml"
-    ]
+    ],
+    "cookie_domain": ".herokuapp.com"
 }

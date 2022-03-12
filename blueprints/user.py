@@ -9,7 +9,8 @@ from utils.utils import *
 
 app = Blueprint('user', __name__)
 
-_DB = Database(read_config("config.json"))
+config = read_config("config.json")
+_DB = Database(config)
 
 
 def new_session(resp):
@@ -25,7 +26,7 @@ def new_session(resp):
     _DB.execute(sql.deleteExpiredSessions)
 
     res = jsonResponse(resp)
-    res.set_cookie("session_token", token, expires=expires, httponly=True, samesite="none", secure=True)
+    res.set_cookie("session_token", token, expires=expires, httponly=True, samesite="lax", secure=True, domain=config['cookie_domain'])
     return res
 
 
