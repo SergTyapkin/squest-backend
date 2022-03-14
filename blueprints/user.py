@@ -26,7 +26,7 @@ def new_session(resp):
     _DB.execute(sql.deleteExpiredSessions)
 
     res = jsonResponse(resp)
-    res.set_cookie("session_token", token, expires=expires, httponly=True, samesite="lax", secure=True, domain=config['cookie_domain'])
+    res.set_cookie("session_token", token, expires=expires, httponly=True, samesite="lax", secure=True)
     return res
 
 
