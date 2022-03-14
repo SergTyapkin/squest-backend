@@ -148,15 +148,28 @@ selectPrivacyById = \
     "SELECT * FROM questsPrivacy " \
     "WHERE id = %s"
 
-selectPublishedQuests = \
-    "SELECT id, author, title, description FROM quests " \
-    "WHERE isPublished = true"
+# выбрать все квесты
+# кроме тех, у которых:
+# 1. ты в черном списке
+# 2. есть белый список кроме тебя
+# Если ты тоже в белом списке - надо добавить этот квест
+selectAvailableQuestsByUseridx4 = \
+    "SELECT id, author, title, description, ispublished FROM quests " \
+    "WHERE (author = %s) OR " \
+    "(ispublished AND " \
+    "   (id NOT IN ( " \
+    "       SELECT questid FROM questsprivacy " \
+    "       WHERE (userid = %s AND isinblacklist = true) " \
+    "           OR (userid != %s AND isinblacklist = false) " \
+    "   )) OR NOT ( " \
+    "       SELECT isinblacklist FROM questsprivacy " \
+    "       WHERE userid = %s AND questid = quests.id " \
+    "   )" \
+    ")"
 
-# selectPublishedBranchesByQuestid = \
-#     "SELECT branches.*, count(tasks.id) as length FROM tasks " \
-#     "RIGHT JOIN branches ON tasks.branchid = branches.id " \
-
-#     "GROUP BY branches.id"
+selectPublishedQuestsByUserid = \
+    "SELECT id, author, title, description, ispublished FROM quests " \
+    "WHERE isPublished = true OR quests.author = %s"
 
 selectPublishedBranchesByQuestid = \
     "SELECT * FROM branches " \
@@ -225,9 +238,12 @@ selectProgressByUseridBranchid = \
     "SELECT * FROM progresses " \
     "WHERE userid = %s AND branchid = %s"
 
+# строки 2 и 3 нужны для удаления рейтингов юзеров в своих же квестах
 selectRatings = \
     "SELECT sum(progresses.maxprogress) as rating, users.id, users.name " \
     "FROM users LEFT JOIN progresses ON progresses.userid = users.id " \
+    "LEFT JOIN branches ON branchid = branches.id LEFT JOIN quests ON branches.questid = quests.id " \
+    "WHERE quests.author != users.id OR quests.author IS NULL " \
     "GROUP BY users.id " \
     "ORDER BY rating DESC"
 
