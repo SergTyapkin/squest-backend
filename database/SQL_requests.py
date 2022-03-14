@@ -229,7 +229,7 @@ selectRatings = \
     "SELECT sum(progresses.maxprogress) as rating, users.id, users.name " \
     "FROM users LEFT JOIN progresses ON progresses.userid = users.id " \
     "GROUP BY users.id " \
-    "ORDER BY rating"
+    "ORDER BY rating DESC"
 
 
 # ----- UPDATES -----

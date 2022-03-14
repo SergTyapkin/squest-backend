@@ -12,7 +12,13 @@ _DB = Database(read_config("config.json"))
 @app.route("")
 def userAuth():
     resp = _DB.execute(sql.selectRatings, manyResults=True)
-    for r in resp:
+    addi = 0
+    for i in range(len(resp)):
+        i -= addi
+        r = resp[i]
         if r['rating'] is None:
             r['rating'] = 0
+            resp += [r]
+            resp.pop(i)
+            addi += 1
     return jsonResponse(resp)
