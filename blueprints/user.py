@@ -105,7 +105,7 @@ def userUpdate(userData):
     try:
         resp = _DB.execute(sql.updateUserById, [name, email, avatarUrl, userData['id']])
     except:
-        return jsonResponse("Имя пользователя или email заняты", HTTP_INVALID_DATA)
+        return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
     return jsonResponse(resp)
 
@@ -132,6 +132,6 @@ def userUpdatePassword(userId):
 
     resp = _DB.execute(sql.updateUserPasswordByIdPassword, [newPassword, userId, oldPassword])
     if len(resp) == 0:
-        return jsonResponse("Пароль не подходит", HTTP_INVALID_AUTH_DATA)
+        return jsonResponse("Старый пароль не такой", HTTP_INVALID_AUTH_DATA)
 
     return jsonResponse("Успешно обновлено")
