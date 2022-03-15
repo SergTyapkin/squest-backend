@@ -68,6 +68,8 @@ def tasksGetLast(userData):
     resp['branchtitle'] = branchResp['title']
     # Добавим к ответу прогресс и общую длину ветки
     resp['progress'] = progress
+    if branchResp['length'] == 0:
+        return jsonResponse("В ветке нет заданий", 400)
     resp['length'] = max(branchResp['length'] - 1, 0)
 
     # Определим кол-во заданий, и уберем поле question, если задание - последнее
@@ -118,6 +120,29 @@ def taskCreate(userId):
     maxOrderId = resp['maxorderid'] or 0
 
     resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId + 1])
+    return jsonResponse(resp)
+
+
+@app.route("/many", methods=["POST"])
+@login_required_return_id
+def taskCreateMany(userId):
+    try:
+        req = request.json
+        branchId = req['branchId']
+        tasks = req['tasks']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    res, branchData = checkBranchAuthor(branchId, userId, _DB)
+    if not res: return branchData
+
+    resp = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
+    maxOrderId = resp['maxorderid'] or 0
+
+    resp = []
+    for task in tasks:
+        maxOrderId += 1
+        resp += [_DB.execute(sql.insertTask, [branchId, task['title'], task['description'], task['question'], task['answers'], maxOrderId])]
     return jsonResponse(resp)
 
 
