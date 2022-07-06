@@ -293,9 +293,12 @@ selectProgressByUseridBranchid = \
 # строки 2 и 3 нужны для удаления рейтингов юзеров и хелперов в своих же квестах
 selectRatings = \
     "SELECT sum(progresses.maxprogress) as rating, users.id, users.name " \
-    "FROM users LEFT JOIN progresses ON progresses.userid = users.id " \
-    "LEFT JOIN branches ON branchid = branches.id LEFT JOIN quests ON branches.questid = quests.id " \
-    "WHERE quests.author != users.id OR quests.author IS NULL " \
+    "FROM users " \
+    "LEFT JOIN progresses ON progresses.userid = users.id " \
+    "LEFT JOIN branches ON branchid = branches.id " \
+    "LEFT JOIN quests ON branches.questid = quests.id " \
+    "LEFT JOIN questshelpers on users.id = questshelpers.userid " \
+    "WHERE (quests.author != users.id AND questshelpers.userid != users.id) OR quests.author IS NULL " \
     "GROUP BY users.id " \
     "ORDER BY rating DESC"
 
