@@ -298,7 +298,7 @@ selectRatings = \
     "LEFT JOIN branches ON branchid = branches.id " \
     "LEFT JOIN quests ON branches.questid = quests.id " \
     "LEFT JOIN questshelpers on users.id = questshelpers.userid " \
-    "WHERE (quests.author != users.id AND questshelpers.userid != users.id) OR quests.author IS NULL " \
+    "WHERE (quests.author != users.id AND questshelpers.userid IS NULL) OR quests.author IS NULL " \
     "GROUP BY users.id " \
     "ORDER BY rating DESC"
 
