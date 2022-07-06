@@ -22,14 +22,14 @@ def tasksGet(userId):
 
     # Нужно выдать таск по id
     if taskId is not None:
-        isAuthor, taskData = checkTaskAuthor(taskId, userId, _DB)
+        isAuthor, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
         if not isAuthor: return taskData
 
         return jsonResponse(taskData)
     # Нужно выдать все таски ветки
     elif branchId is not None:
         # Можно смотреть только если юзер залогинен и юзер - автор ветки
-        if userId is None or not checkBranchAuthor(branchId, userId, _DB)[0]:
+        if userId is None or not checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)[0]:
             return jsonResponse("Вы не являетесь автором ветки", HTTP_NO_PERMISSIONS)
         resp = _DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
         return jsonResponse(resp)
@@ -54,10 +54,11 @@ def tasksGetLast(userData):
         return jsonResponse("Квест или ветка не выбраны", HTTP_INVALID_DATA)
 
     questResp = _DB.execute(sql.selectQuestById, [userData['chosenquestid']])
+    isAuthor = checkTaskAuthor(questResp['id'], userData['id'], _DB, allowHelpers=True)[0]
     branchResp = _DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
     # Можно получить только последний таск в выбранной ветке и квесте только если
     # ветка и квест опубликованы или юзер - автор
-    if questResp['author'] != userData['id'] and (not questResp['ispublished'] or not branchResp['ispublished']):
+    if not isAuthor and (not questResp['ispublished'] or not branchResp['ispublished']):
         return jsonResponse("Выбранный квест или ветка не опубликованы, а вы не автор", HTTP_NO_PERMISSIONS)
 
     progress = getOrCreateUserProgress(userData)
@@ -113,7 +114,7 @@ def taskCreate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB)
+    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
     if not res: return branchData
 
     resp = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
@@ -133,7 +134,7 @@ def taskCreateMany(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB)
+    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
     if not res: return branchData
 
     resp = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
@@ -160,7 +161,7 @@ def taskUpdate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, taskData = checkTaskAuthor(taskId, userId, _DB)
+    res, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
     if not res: return taskData
 
     title = title or taskData['title']
@@ -185,7 +186,7 @@ def taskDelete(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, taskData = checkTaskAuthor(taskId, userId, _DB)
+    res, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
     if not res: return taskData
 
     _DB.execute(sql.deleteTaskById, [taskId])

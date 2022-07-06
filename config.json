@@ -1,9 +1,9 @@
 {
-    "host": "ec2-52-214-125-106.eu-west-1.compute.amazonaws.com",
+    "host": "localhost",
     "port": 5432,
-    "user": "yoffybvokztlqn",
-    "password": "97b7496d8fb6698d0cd6a624017f70baf3d84e454974e1f41593cb28eff44c89",
-    "database": "d24p7gda8btqjf",
+    "user": "postgres",
+    "password": "root",
+    "database": "squest-site",
 
     "api_port": "9000",
     "debug": "False",

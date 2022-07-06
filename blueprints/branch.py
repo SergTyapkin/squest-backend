@@ -22,8 +22,9 @@ def branchesGet(userId):
     # Нужно выдать ветку по id
     if branchId is not None:
         branchData = _DB.execute(sql.selectQuestByBranchId, [branchId])
+        isAuthor = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)[0]
         # Если юзер залогинен и юзер - автор квеста ветки
-        if branchData['ispublished'] or branchData['author'] == userId:
+        if branchData['ispublished'] or isAuthor:
             # Добавим прогресс пользователя
             resp = _DB.execute(sql.selectProgressByUseridBranchid, [userId, branchId])
             branchData['progress'] = resp.get('maxprogress') or 0
@@ -35,7 +36,7 @@ def branchesGet(userId):
             return jsonResponse("Ветка не опубликована, а вы не автор", HTTP_NO_PERMISSIONS)
     # Нужно выдать все ветки квеста
     elif questId is not None:
-        if userId is not None and checkQuestAuthor(questId, userId, _DB)[0]:  # Если юзер залогинен и юзер - автор квеста
+        if userId is not None and checkQuestAuthor(questId, userId, _DB, allowHelpers=True)[0]:  # Если юзер залогинен и юзер - автор квеста
             resp = _DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # можно смотреть все ветки квеста
         else:
             resp = _DB.execute(sql.selectPublishedBranchesByQuestid, [questId], manyResults=True)  # иначе - только опубликованные
@@ -55,7 +56,7 @@ def branchCreate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB)
+    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
     if not res: return questData
 
     resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
@@ -75,7 +76,7 @@ def branchCreateMany(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB)
+    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
     if not res: return questData
 
     resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
@@ -101,7 +102,7 @@ def branchUpdate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB)
+    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
     if not res: return branchData
 
     title = title or branchData['title']
@@ -122,7 +123,7 @@ def branchDelete(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB)
+    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
     if not res: return branchData
 
     _DB.execute(sql.deleteBranchById, [branchId])

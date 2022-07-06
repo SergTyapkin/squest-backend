@@ -37,6 +37,13 @@ CREATE TABLE IF NOT EXISTS questsPrivacy (
     UNIQUE (userId, questId)
 );
 
+CREATE TABLE IF NOT EXISTS questsHelpers (
+    id           SERIAL PRIMARY KEY,
+    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    questId      SERIAL NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
+    UNIQUE (userId, questId)
+);
+
 CREATE TABLE IF NOT EXISTS branches (
     id             SERIAL PRIMARY KEY,
     orderId        SERIAL NOT NULL,
