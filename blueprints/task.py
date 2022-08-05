@@ -54,7 +54,7 @@ def tasksGetLast(userData):
         return jsonResponse("Квест или ветка не выбраны", HTTP_INVALID_DATA)
 
     questResp = _DB.execute(sql.selectQuestById, [userData['chosenquestid']])
-    isAuthor = checkTaskAuthor(questResp['id'], userData['id'], _DB, allowHelpers=True)[0]
+    isAuthor = checkQuestAuthor(questResp['id'], userData['id'], _DB, allowHelpers=True)[0]
     branchResp = _DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
     # Можно получить только последний таск в выбранной ветке и квесте только если
     # ветка и квест опубликованы или юзер - автор
