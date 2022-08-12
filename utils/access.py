@@ -71,7 +71,7 @@ def login_or_none(f):
     def wrapper(*args, **kwargs):
         userData = get_logined_user()
         if not userData:
-            return None
+            userData = None
         return f(*args, userData, **kwargs)
 
     return wrapper
@@ -82,7 +82,7 @@ def login_or_none_return_id(f):
     def wrapper(*args, **kwargs):
         userId = get_logined_userid()
         if not userId:
-            return None
+            userId = None
         return f(*args, userId, **kwargs)
 
     return wrapper

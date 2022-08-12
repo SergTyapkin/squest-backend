@@ -206,6 +206,16 @@ selectAvailableQuestsByUseridx5 = \
     "   ) " \
     ")"
 
+selectAvailableQuests = \
+    "SELECT id, author, title, description, ispublished FROM quests " \
+    "WHERE " \
+    "(ispublished AND " \
+    "   (id NOT IN ( " \
+    "       SELECT questid FROM questsprivacy " \
+    "       WHERE isinblacklist = false " \
+    "   ))" \
+    ")"
+
 selectPublishedQuestsByUserid = \
     "SELECT id, author, title, description, ispublished FROM quests " \
     "WHERE isPublished = true OR quests.author = %s"

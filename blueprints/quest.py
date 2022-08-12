@@ -31,8 +31,10 @@ def questsGet(userId_logined):
         else:
             resp = _DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
     # Нужно выдать вообще все квесты
-    else:
+    elif userId_logined is not None:
         resp = _DB.execute(sql.selectAvailableQuestsByUseridx5, [userId_logined] * 5, manyResults=True)  # просмотр всех опубликованных квестов
+    else:
+        resp = _DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
 
     return jsonResponse(resp)
 
