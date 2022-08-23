@@ -8,6 +8,8 @@ from utils.utils import jsonResponse
 
 def _checkAuthor(sqlRequest: str, args: list, fieldName: str, toCompare: any, DB: Database) -> (bool, dict or str):
     questData = DB.execute(sqlRequest, args)
+    if not questData:
+        return False, jsonResponse("Квеста не существует", HTTP_NOT_FOUND)
     if questData[fieldName] != toCompare:
         return False, jsonResponse("Вы не являетесь автором квеста", HTTP_NO_PERMISSIONS)
     return True, questData

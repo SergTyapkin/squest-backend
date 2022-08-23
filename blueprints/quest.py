@@ -17,11 +17,21 @@ def questsGet(userId_logined):
         req = request.args
         userId = req.get('userId')
         questId = req.get('questId')
+        questUid = req.get('questUid')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     # Нужно выдать квест по id
     if questId is not None:
+        res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
+        return questData
+    # Нужно выдать квест по uid
+    elif questUid is not None:
+        questData = _DB.execute(sql.selectQuestByUid, [questUid])
+        if not questData:
+            return jsonResponse('Квеста не существует или нет прав доступа', HTTP_NO_PERMISSIONS)
+
+        questId = questData['id']
         res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
         return questData
     # Нужно выдать все квесты юзера
@@ -36,6 +46,24 @@ def questsGet(userId_logined):
     else:
         resp = _DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
 
+    return jsonResponse(resp)
+
+
+@app.route("/uid")
+@login_required_return_id
+def questsUidGet(userId):
+    try:
+        req = request.args
+        questId = req.get('id')
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
+    if not res:
+        return questData
+    resp = _DB.execute(sql.selectQuestUidById, [questData['id']])
+    if not resp:
+        return jsonResponse("Квеста не существует или нет прав доступа", HTTP_NO_PERMISSIONS)
     return jsonResponse(resp)
 
 
@@ -64,6 +92,7 @@ def questUpdate(userId):
         title = req.get('title')
         description = req.get('description')
         isPublished = req.get('isPublished')
+        isLinkActive = req.get('isLinkActive')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -73,8 +102,9 @@ def questUpdate(userId):
     title = title or questData['title']
     description = description or questData['description']
     if isPublished is None: isPublished = questData['ispublished']
+    if isLinkActive is None: isLinkActive = questData['islinkactive']
 
-    resp = _DB.execute(sql.updateQuestById, [title, description, isPublished, questId])
+    resp = _DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, questId])
     return jsonResponse(resp)
 
 

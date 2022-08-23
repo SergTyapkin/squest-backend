@@ -21,12 +21,14 @@ CREATE TABLE IF NOT EXISTS sessions (
 ------ Quests data -------
 CREATE TABLE IF NOT EXISTS quests (
     id             SERIAL PRIMARY KEY,
+    uid            TEXT UNIQUE NOT NULL,
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
     createdDate    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     author         SERIAL NOT NULL REFERENCES users(id),
     isPublished    BOOL NOT NULL DEFAULT false,
-    isModerated    BOOL NOT NULL DEFAULT false
+    isModerated    BOOL NOT NULL DEFAULT false,
+    isLinkActive   BOOL NOT NULL DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS questsPrivacy (

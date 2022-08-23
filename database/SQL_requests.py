@@ -98,8 +98,8 @@ deleteSessionByToken = \
 
 # ----- INSERTS -----
 insertQuest = \
-    "INSERT INTO quests (title, description, author, isPublished) " \
-    "VALUES (%s, %s, %s, %s) " \
+    "INSERT INTO quests (uid, title, description, author, isPublished) " \
+    "VALUES (%s, %s, %s, %s, %s) " \
     "RETURNING *"
 
 insertProgress = \
@@ -141,7 +141,16 @@ selectPublishedQuestsByAuthor = \
     ")"
 
 selectQuestById = \
+    "SELECT id, author, title, description, isPublished, isLinkActive FROM quests " \
+    "WHERE id = %s"
+
+selectQuestByUid = \
     "SELECT id, author, title, description, isPublished FROM quests " \
+    "WHERE uid = %s " \
+    "AND islinkactive = true"
+
+selectQuestUidById = \
+    "SELECT uid FROM quests " \
     "WHERE id = %s"
 
 selectQuestByIdHelperid = \
@@ -324,7 +333,8 @@ updateQuestById = \
     "UPDATE quests SET " \
     "title = %s, " \
     "description = %s, " \
-    "isPublished = %s " \
+    "isPublished = %s, " \
+    "isLinkActive = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 
