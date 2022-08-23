@@ -154,13 +154,13 @@ selectQuestUidById = \
     "WHERE id = %s"
 
 selectQuestByIdHelperid = \
-    "SELECT quests.id, author, title, description, isPublished FROM quests " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive FROM quests " \
     "LEFT JOIN questshelpers on quests.id = questshelpers.questid " \
     "WHERE quests.id = %s AND questshelpers.userid = %s"
 
 
 selectQuestsByAuthorx2 = \
-    "SELECT id, author, title, description, isPublished FROM quests " \
+    "SELECT id, author, title, description, isPublished, isLinkActive FROM quests " \
     "WHERE author = %s OR " \
     "(id IN " \
     "   (SELECT questid FROM questshelpers" \
@@ -195,7 +195,7 @@ selectHelperById = \
 # 2. есть белый список кроме тебя
 # Если ты тоже в белом списке - надо добавить этот квест
 selectAvailableQuestsByUseridx5 = \
-    "SELECT id, author, title, description, ispublished FROM quests " \
+    "SELECT id, author, title, description, ispublished, islinkactive FROM quests " \
     "WHERE " \
     "(author = %s) OR " \
     "(id IN " \
@@ -216,7 +216,7 @@ selectAvailableQuestsByUseridx5 = \
     ")"
 
 selectAvailableQuests = \
-    "SELECT id, author, title, description, ispublished FROM quests " \
+    "SELECT id, author, title, description, isPublished, isLinkActive FROM quests " \
     "WHERE " \
     "(ispublished AND " \
     "   (id NOT IN ( " \
