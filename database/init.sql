@@ -71,7 +71,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
     question       TEXT DEFAULT NULL,
-    answers        TEXT ARRAY NOT NULL
+    answers        TEXT ARRAY NOT NULL,
+    isQrAnswer     BOOL NOT NULL DEFAULT false
 );
 
 

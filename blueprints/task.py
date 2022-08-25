@@ -158,6 +158,7 @@ def taskUpdate(userId):
         description = req.get('description')
         question = req.get('question')
         answers = req.get('answers')
+        isQrAnswer = req.get('isQrAnswer')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -172,8 +173,9 @@ def taskUpdate(userId):
         answers = taskData['answers']
     description = description or taskData['description']
     orderId = orderId or taskData['orderid']
+    isQrAnswer = isQrAnswer or taskData['isqranswer']
 
-    resp = _DB.execute(sql.updateTaskById, [orderId, title, description, question, answers, taskId])
+    resp = _DB.execute(sql.updateTaskById, [orderId, title, description, question, answers, isQrAnswer, taskId])
     return jsonResponse(resp)
 
 

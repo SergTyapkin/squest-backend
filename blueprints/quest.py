@@ -31,9 +31,7 @@ def questsGet(userId_logined):
         if not questData:
             return jsonResponse('Квеста не существует или нет прав доступа', HTTP_NO_PERMISSIONS)
 
-        questId = questData['id']
-        res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
-        return questData
+        return jsonResponse(questData)
     # Нужно выдать все квесты юзера
     elif userId is not None:
         if str(userId_logined) == userId:

@@ -294,7 +294,7 @@ selectTasksByPublishedBranchid = \
     "WHERE branchid = %s AND quests.isPublished = true AND branches.isPublished = true"
 
 selectTaskByBranchidNumber = \
-    "SELECT id, orderid, title, description, question FROM tasks " \
+    "SELECT id, orderid, title, description, question, isqranswer FROM tasks " \
     "WHERE branchid = %s " \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
@@ -390,7 +390,8 @@ updateTaskById = \
     "title = %s, " \
     "description = %s, " \
     "question = %s, " \
-    "answers = %s " \
+    "answers = %s, " \
+    "isQrAnswer = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 
