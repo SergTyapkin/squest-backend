@@ -19,7 +19,7 @@ def userUpdateConfirmation():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.updateUserConfirmationByName, [isConfirmed, username])
+    resp = _DB.execute(sql.updateUserConfirmationByUsername, [isConfirmed, username])
     if len(resp) == 0:
         return jsonResponse("Имя пользователя не найдено", HTTP_NOT_FOUND)
 

@@ -39,7 +39,9 @@ def userAuth():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectUserByNamePassword, [username, password])
+    password = hash_sha256(password)
+
+    resp = _DB.execute(sql.selectUserByUsernamePassword, [username, password])
     if len(resp) == 0:
         return jsonResponse("Неверные логин или пароль", HTTP_INVALID_AUTH_DATA)
 
@@ -72,15 +74,18 @@ def userGet(userData):
 def userCreate():
     try:
         req = request.json
-        name = req['username']
+        username = req['username']
+        name = req['name']
         password = req['password']
         avatarUrl = req.get('avatarUrl')
         email = req.get('email')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
+    password = hash_sha256(password)
+
     try:
-        resp = _DB.execute(sql.insertUser, [name, password, avatarUrl, email])
+        resp = _DB.execute(sql.insertUser, [username, password, avatarUrl, email, name])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -92,18 +97,20 @@ def userCreate():
 def userUpdate(userData):
     try:
         req = request.json
-        name = req.get('username')
+        username = req.get('username')
+        name = req.get('name')
         email = req.get('email')
         avatarUrl = req.get('avatarUrl')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     name = name or userData['name']
+    username = username or userData['username']
     email = email or userData['email']
     avatarUrl = avatarUrl or userData['avatarurl']
 
     try:
-        resp = _DB.execute(sql.updateUserById, [name, email, avatarUrl, userData['id']])
+        resp = _DB.execute(sql.updateUserById, [username, name, email, avatarUrl, userData['id']])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -126,6 +133,9 @@ def userUpdatePassword(userId):
         newPassword = req['newPassword']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    oldPassword = hash_sha256(oldPassword)
+    newPassword = hash_sha256(newPassword)
 
     # if (userData['name'] != username) and (not userData['isadmin']):
     #     return jsonResponse("Нет прав", HTTP_NO_PERMISSIONS)

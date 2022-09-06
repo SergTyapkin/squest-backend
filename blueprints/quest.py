@@ -167,7 +167,7 @@ def privacyCreate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByName, [userName])
+        resp = _DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
@@ -198,7 +198,7 @@ def privacyUpdate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByName, [userName])
+        resp = _DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
@@ -270,7 +270,7 @@ def helperCreate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByName, [userName])
+        resp = _DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
@@ -300,7 +300,7 @@ def helperUpdate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByName, [userName])
+        resp = _DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']

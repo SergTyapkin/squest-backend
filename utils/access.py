@@ -1,3 +1,4 @@
+import hashlib
 from functools import wraps
 
 from flask import request, make_response
@@ -10,6 +11,10 @@ from utils.utils import *
 _config = read_config("config.json")
 _DB = Database(_config)
 
+
+def hash_sha256(auth_string: str) -> str:
+    hash = hashlib.sha256(auth_string.encode()).hexdigest()
+    return hash
 
 def get_logined_userid():
     token = request.cookies.get('session_token')

@@ -1,11 +1,11 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "id, name, email, isadmin, joineddate, isconfirmed, avatarurl, chosenquestid, chosenbranchid"
+_userColumns = "id, name, username, email, isadmin, joineddate, isconfirmed, avatarurl, chosenquestid, chosenbranchid"
 # ----- INSERTS -----
 insertUser = \
-    "INSERT INTO users (name, password, avatarUrl, email, ChosenQuestId, ChosenBranchId) " \
-    "VALUES (%s, %s, %s, %s, NULL, NULL) " \
+    "INSERT INTO users (username, password, avatarUrl, email, name, ChosenQuestId, ChosenBranchId) " \
+    "VALUES (%s, %s, %s, %s, %s, NULL, NULL) " \
     f"RETURNING {_userColumns}"
 
 insertSession = \
@@ -13,17 +13,17 @@ insertSession = \
     "VALUES (%s, %s, %s)"
 
 # ----- SELECTS -----
-selectUserByNamePassword = \
+selectUserByUsernamePassword = \
     f"SELECT {_userColumns} FROM users " \
-    "WHERE name = %s AND password = %s"
+    "WHERE username = %s AND password = %s"
 
 selectUserById = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE id = %s"
 
-selectUserByName = \
+selectUserByUsername = \
     f"SELECT {_userColumns} FROM users " \
-    "WHERE name = %s"
+    "WHERE username = %s"
 
 selectUserIdBySessionToken = \
     "SELECT userId FROM sessions " \
@@ -39,32 +39,21 @@ selectUserDataBySessionToken = \
     "WHERE token = %s"
 
 # ----- UPDATES -----
-updateUserConfirmationByName = \
+updateUserConfirmationById = \
     "UPDATE users SET " \
     "isConfirmed = %s " \
-    "WHERE name = %s " \
+    "WHERE id = %s " \
     "RETURNING id"
 
-updateUserNameByName = \
-    "UPDATE users SET " \
-    "name = %s " \
-    "WHERE name = %s " \
-    "RETURNING id"
-
-updateUserAvatarByName = \
+updateUserAvatarById = \
     "UPDATE users SET " \
     "avatarUrl = %s " \
-    "WHERE name = %s " \
-    "RETURNING id"
-
-updateUserEmailByName = \
-    "UPDATE users SET " \
-    "email = %s " \
-    "WHERE name = %s " \
+    "WHERE id = %s " \
     "RETURNING id"
 
 updateUserById = \
     "UPDATE users SET " \
+    "username = %s, " \
     "name = %s, " \
     "email = %s, " \
     "avatarUrl = %s " \

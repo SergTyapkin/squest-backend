@@ -1,9 +1,10 @@
 ------- Users data -------
 CREATE TABLE IF NOT EXISTS users (
     id               SERIAL PRIMARY KEY,
-    name             TEXT NOT NULL UNIQUE,
+    username         TEXT NOT NULL UNIQUE,
     password         TEXT NOT NULL,
     email            TEXT DEFAULT NULL UNIQUE,
+    name             TEXT DEFAULT NULL UNIQUE,
     isAdmin          BOOLEAN DEFAULT FALSE,
     joinedDate       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     isConfirmed      BOOLEAN DEFAULT FALSE,
