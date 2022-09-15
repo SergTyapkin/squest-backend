@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS quests (
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
     createdDate    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    author         SERIAL NOT NULL REFERENCES users(id),
+    author         SERIAL NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     isPublished    BOOL NOT NULL DEFAULT false,
     isModerated    BOOL NOT NULL DEFAULT false,
     isLinkActive   BOOL NOT NULL DEFAULT false
@@ -57,11 +57,15 @@ CREATE TABLE IF NOT EXISTS branches (
 );
 
 CREATE TABLE IF NOT EXISTS progresses (
+    id           SERIAL PRIMARY KEY,
     userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     branchId     SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
     progress     INT NOT NULL DEFAULT 0,
     maxProgress  INT NOT NULL DEFAULT 0,
-    isFoundBonus BOOL NOT NULL DEFAULT FALSE,
+    isFinished   BOOL NOT NULL DEFAULT FALSE,
+    ratingVote   FLOAT DEFAULT NULL,
+    started      TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    finished     TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     UNIQUE (userId, branchId)
 );
 
@@ -79,7 +83,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 CREATE TABLE IF NOT EXISTS images (
     id             SERIAL PRIMARY KEY,
-    author         SERIAL REFERENCES users(id),
+    author         SERIAL REFERENCES users(id) ON DELETE SET NULL,
     type           TEXT NOT NULL,
     base64         TEXT NOT NULL
 );
@@ -111,9 +115,26 @@ $$;
 --------
 CREATE OR REPLACE FUNCTION set_actual_max_progress() RETURNS TRIGGER AS
 $$
+DECLARE
+    length INTEGER;
 BEGIN
     IF NEW.progress > OLD.maxProgress THEN
         NEW.maxprogress = NEW.progress;
+    END IF;
+
+    SELECT count(tasks.id) - 1 FROM tasks
+    RIGHT JOIN branches ON tasks.branchid = branches.id
+    WHERE branches.id = NEW.branchid
+    GROUP BY branches.id
+    INTO length;
+
+    IF length < 0 THEN
+        length = 0;
+    END IF;
+
+    IF length = NEW.progress AND NEW.isFinished = false THEN
+        NEW.isFinished = True;
+        NEW.finished = now();
     END IF;
 
     RETURN NEW;

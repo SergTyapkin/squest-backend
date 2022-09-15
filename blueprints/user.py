@@ -65,9 +65,45 @@ def userSessionDelete():
 
 
 @app.route("")
-@login_required
+@login_or_none
 def userGet(userData):
-    return jsonResponse(userData)
+    try:
+        req = request.args
+        userId = req.get('id')
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    def addRating(obj, id):
+        res = _DB.execute(sql.selectRatings, [], manyResults=True)
+        for idx, rating in enumerate(res):
+            if rating['id'] == id:
+                obj['rating'] = rating['rating'] or 0
+                obj['position'] = idx + 1
+                return
+        obj['rating'] = 0
+        obj['position'] = len(res)
+
+    def addQuestsInfo(obj, id):
+        createdQuests = _DB.execute(sql.selectCreatedQuestsByUserid, [id])
+        completedBranches = _DB.execute(sql.selectCompletedBranchesByUserid, [id])
+        obj['createdquests'] = createdQuests.get('questscreated') or 0
+        obj['completedbranches'] = completedBranches.get('completedbranches') or 0
+
+
+    if userId is None:  # return self user data
+        if userData is None:
+            return jsonResponse("Не авторизован", HTTP_INVALID_AUTH_DATA)
+        addRating(userData, userData['id'])
+        addQuestsInfo(userData, userData['id'])
+        return jsonResponse(userData)
+
+    # get another user data
+    res = _DB.execute(sql.selectAnotherUserById, [userId])
+    if not res:
+        return jsonResponse("Пользователь не найден", HTTP_NOT_FOUND)
+    addRating(res, userId)
+    addQuestsInfo(res, userId)
+    return jsonResponse(res)
 
 
 @app.route("", methods=["POST"])

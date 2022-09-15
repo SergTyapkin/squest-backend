@@ -24,7 +24,7 @@ def branchesGet(userId):
         branchData = _DB.execute(sql.selectQuestByBranchId, [branchId])
         isAuthor = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)[0]
         # Если юзер залогинен и юзер - автор квеста ветки
-        if branchData['ispublished'] or isAuthor:
+        if branchData and (branchData['ispublished'] or isAuthor):
             # Добавим прогресс пользователя
             resp = _DB.execute(sql.selectProgressByUseridBranchid, [userId, branchId])
             branchData['progress'] = resp.get('maxprogress') or 0
@@ -40,7 +40,7 @@ def branchesGet(userId):
             resp = _DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # можно смотреть все ветки квеста
         else:
             resp = _DB.execute(sql.selectPublishedBranchesByQuestid, [questId], manyResults=True)  # иначе - только опубликованные
-        return jsonResponse(resp)
+        return jsonResponse({'branches': resp})
     # Не пришло ни одного id
     return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -86,7 +86,7 @@ def branchCreateMany(userId):
     for branch in branches:
         maxOrderId += 1
         resp += [_DB.execute(sql.insertBranch, [questId, branch['title'], branch['description'], maxOrderId])]
-    return jsonResponse(resp)
+    return jsonResponse({'branches': resp})
 
 
 @app.route("", methods=["PUT"])

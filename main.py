@@ -23,7 +23,7 @@ app.register_blueprint(quest_app,  url_prefix='/quest')
 app.register_blueprint(branch_app, url_prefix='/branch')
 app.register_blueprint(task_app,   url_prefix='/task')
 app.register_blueprint(image_app,   url_prefix='/image')
-app.register_blueprint(rating_app,   url_prefix='/rating')
+app.register_blueprint(rating_app,   url_prefix='/ratings')
 
 
 @app.route('/')

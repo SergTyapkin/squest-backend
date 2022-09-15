@@ -1,7 +1,7 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "id, name, username, email, isadmin, joineddate, isconfirmed, avatarurl, chosenquestid, chosenbranchid"
+_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarurl, chosenquestid, chosenbranchid"
 # ----- INSERTS -----
 insertUser = \
     "INSERT INTO users (username, password, avatarUrl, email, name, ChosenQuestId, ChosenBranchId) " \
@@ -21,6 +21,24 @@ selectUserById = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE id = %s"
 
+selectAnotherUserById = \
+    f"SELECT users.id, name, username, joineddate, avatarurl, chosenbranchid, chosenquestid, quests.title as chosenQuest, branches.title as chosenBranch FROM users " \
+    "LEFT JOIN quests ON users.chosenquestid = quests.id " \
+    "LEFT JOIN branches ON users.chosenbranchid = branches.id " \
+    "WHERE users.id = %s"
+
+selectCreatedQuestsByUserid = \
+    f"SELECT count(quests.id) as questsCreated FROM users " \
+    "LEFT JOIN quests ON users.id = quests.author " \
+    "WHERE users.id = %s " \
+    "GROUP BY users.id"
+
+selectCompletedBranchesByUserid = \
+    f"SELECT count(progresses.id) as branchesCompleted FROM users " \
+    "LEFT JOIN progresses ON progresses.userid = users.id " \
+    "WHERE users.id = %s AND progresses.isfinished = True " \
+    "GROUP BY users.id"
+
 selectUserByUsername = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE username = %s"
@@ -34,8 +52,10 @@ selectSessionByUserId = \
     "WHERE userId = %s"
 
 selectUserDataBySessionToken = \
-    f"SELECT {_userColumns} FROM sessions " \
+    f"SELECT {_userColumns}, quests.title as chosenQuest, branches.title as chosenBranch FROM sessions " \
     "JOIN users ON sessions.userId = users.id " \
+    "LEFT JOIN quests ON users.chosenquestid = quests.id " \
+    "LEFT JOIN branches ON users.chosenbranchid = branches.id " \
     "WHERE token = %s"
 
 # ----- UPDATES -----
@@ -130,11 +150,19 @@ selectPublishedQuestsByAuthor = \
     ")"
 
 selectQuestById = \
-    "SELECT id, author, title, description, isPublished, isLinkActive FROM quests " \
-    "WHERE id = %s"
+    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, users.username as authorName " \
+    "FROM quests LEFT JOIN users ON quests.author = users.id " \
+    "WHERE quests.id = %s"
+
+selectPublishedQuestById = \
+    "SELECT quests.id, author, title, description, isPublished, users.username as authorName " \
+    "FROM quests JOIN users ON quests.author = users.id " \
+    "WHERE quests.id = %s " \
+    "AND ispublished = true"
 
 selectQuestByUid = \
-    "SELECT id, author, title, description, isPublished FROM quests " \
+    "SELECT quests.id, author, title, description, isPublished, users.username as authorName " \
+    "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "WHERE uid = %s " \
     "AND islinkactive = true"
 
@@ -143,15 +171,17 @@ selectQuestUidById = \
     "WHERE id = %s"
 
 selectQuestByIdHelperid = \
-    "SELECT quests.id, author, title, description, isPublished, isLinkActive FROM quests " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive, users.username as authorName " \
+    "FROM quests JOIN users ON quests.author = users.id " \
     "LEFT JOIN questshelpers on quests.id = questshelpers.questid " \
     "WHERE quests.id = %s AND questshelpers.userid = %s"
 
 
 selectQuestsByAuthorx2 = \
-    "SELECT id, author, title, description, isPublished, isLinkActive FROM quests " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive, True as canEdit " \
+    "FROM quests " \
     "WHERE author = %s OR " \
-    "(id IN " \
+    "(quests.id IN " \
     "   (SELECT questid FROM questshelpers" \
     "       JOIN users on questshelpers.userid = users.id " \
     "       WHERE userid = %s " \
@@ -159,7 +189,7 @@ selectQuestsByAuthorx2 = \
     ")"
 
 selectPrivacyUserNamesByQuestId = \
-    "SELECT users.name as name, questsprivacy.id as id, isInBlackList FROM questsPrivacy " \
+    "SELECT users.username as name, questsprivacy.id as id, isInBlackList FROM questsPrivacy " \
     "JOIN users ON userId = users.id " \
     "WHERE questId = %s"
 
@@ -168,7 +198,7 @@ selectPrivacyById = \
     "WHERE id = %s"
 
 selectHelpersUserNamesByQuestId = \
-    "SELECT users.name as name, questsHelpers.id as id FROM questsHelpers " \
+    "SELECT users.username as name, questsHelpers.id as id FROM questsHelpers " \
     "JOIN users ON userId = users.id " \
     "WHERE questId = %s"
 
@@ -179,22 +209,30 @@ selectHelperById = \
 # выбрать все квесты
 # 1. где ты автор
 # 2. где ты в соавторах
-# + все остальные кроме тех, у которых:
-# 1. ты в черном списке
-# 2. есть белый список кроме тебя
-# Если ты тоже в белом списке - надо добавить этот квест
-selectAvailableQuestsByUseridx5 = \
-    "SELECT id, author, title, description, ispublished, islinkactive FROM quests " \
+# + Все кроме этих, но кроме тех, у которых:
+# # 1. ты в черном списке
+# # 2. есть белый список кроме тебя
+# # Если ты тоже в белом списке - надо добавить этот квест
+
+selectAvailableQuestsByUseridx7 = \
+    "SELECT quests.id, author, title, description, ispublished, islinkactive, users.username as authorName, True as canEdit " \
+    "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
     "(author = %s) OR " \
-    "(id IN " \
+    "(quests.id IN " \
     "   (SELECT questid FROM questshelpers" \
     "       JOIN users on questshelpers.userid = users.id " \
     "       WHERE userid = %s " \
     "   ) " \
-    ") OR " \
+    ") " \
+    "" \
+    "UNION " \
+    "" \
+    "SELECT quests.id, author, title, description, ispublished, islinkactive, users.username as authorName, False as canEdit " \
+    "FROM quests JOIN users ON quests.author = users.id " \
+    "WHERE " \
     "(ispublished AND " \
-    "   (id NOT IN ( " \
+    "   (quests.id NOT IN ( " \
     "       SELECT questid FROM questsprivacy " \
     "       WHERE (userid = %s AND isinblacklist = true) " \
     "           OR (userid != %s AND isinblacklist = false) " \
@@ -202,13 +240,22 @@ selectAvailableQuestsByUseridx5 = \
     "       SELECT isinblacklist FROM questsprivacy " \
     "       WHERE userid = %s AND questid = quests.id " \
     "   ) " \
+    ") AND " \
+    "(author != %s) AND " \
+    "(quests.id NOT IN " \
+    "   (SELECT questid FROM questshelpers" \
+    "       JOIN users on questshelpers.userid = users.id " \
+    "       WHERE userid = %s " \
+    "   ) " \
     ")"
 
+
 selectAvailableQuests = \
-    "SELECT id, author, title, description, isPublished, isLinkActive FROM quests " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive, users.username as authorName " \
+    "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
     "(ispublished AND " \
-    "   (id NOT IN ( " \
+    "   (quests.id NOT IN ( " \
     "       SELECT questid FROM questsprivacy " \
     "       WHERE isinblacklist = false " \
     "   ))" \
@@ -298,18 +345,42 @@ selectProgressByUseridBranchid = \
     "SELECT * FROM progresses " \
     "WHERE userid = %s AND branchid = %s"
 
+selectProgressStatsByUseridBranchid = \
+    "SELECT ratingvote as rating, finished - started as time FROM progresses " \
+    "WHERE userid = %s AND branchid = %s"
+
 # строки 2 и 3 нужны для удаления рейтингов юзеров и хелперов в своих же квестах
 selectRatings = \
-    "SELECT sum(progresses.maxprogress) as rating, users.id, users.name " \
+    "SELECT sum(progresses.maxprogress) as rating, users.id, users.username " \
     "FROM users " \
     "LEFT JOIN progresses ON progresses.userid = users.id " \
     "LEFT JOIN branches ON branchid = branches.id " \
     "LEFT JOIN quests ON branches.questid = quests.id " \
-    "LEFT JOIN questshelpers on users.id = questshelpers.userid " \
-    "WHERE (quests.author != users.id AND questshelpers.userid IS NULL) OR quests.author IS NULL " \
+    "LEFT JOIN questshelpers on quests.id = questshelpers.questid " \
+    "WHERE ((quests.author IS NULL OR quests.author != users.id) AND (questshelpers.userid IS NULL OR questshelpers.userid != users.id)) " \
     "GROUP BY users.id " \
     "ORDER BY rating DESC"
 
+
+selectPLayersProgressesByQuestid = \
+    "SELECT users.id, users.username, progresses.maxprogress as progress FROM progresses " \
+    "JOIN users ON progresses.userid = users.id " \
+    "JOIN branches ON progresses.branchid = branches.id " \
+    "JOIN quests ON branches.questid = quests.id " \
+    "WHERE quests.id = %s"
+
+selectFinishedQuestPLayers = \
+    selectPLayersProgressesByQuestid + \
+    " AND progresses.isfinished = True"
+
+selectQuestStatisticsByQiestid = \
+    "SELECT quests.id, avg(ratingvote) as rating, avg(finished - started) as time, count(progresses.id) as played " \
+    "FROM progresses " \
+    "JOIN branches ON progresses.branchid = branches.id " \
+    "JOIN quests ON branches.questid = quests.id " \
+    "WHERE quests.id = %s " \
+    "AND progresses.isfinished = true " \
+    "GROUP BY quests.id"
 
 # ----- UPDATES -----
 updateUserChooseBranchByUserId = \
@@ -388,6 +459,14 @@ updateTaskOrderidById = \
     "UPDATE tasks SET " \
     "orderid = %s, " \
     "WHERE id = %s " \
+    "RETURNING *"
+
+updateProgressRatingByBranchidUserid = \
+    "UPDATE progresses SET " \
+    "ratingvote = %s " \
+    "WHERE isfinished = True AND " \
+    "branchid = %s AND " \
+    "userid = %s " \
     "RETURNING *"
 
 # ----- DELETES -----

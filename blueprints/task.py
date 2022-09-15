@@ -32,7 +32,7 @@ def tasksGet(userId):
         if userId is None or not checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)[0]:
             return jsonResponse("Вы не являетесь автором ветки", HTTP_NO_PERMISSIONS)
         resp = _DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
-        return jsonResponse(resp)
+        return jsonResponse({'tasks': resp})
     # Не пришло ни одного id
     return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -144,7 +144,7 @@ def taskCreateMany(userId):
     for task in tasks:
         maxOrderId += 1
         resp += [_DB.execute(sql.insertTask, [branchId, task['title'], task['description'], task['question'], task['answers'], maxOrderId])]
-    return jsonResponse(resp)
+    return jsonResponse({'tasks': resp})
 
 
 @app.route("", methods=["PUT"])
@@ -173,7 +173,8 @@ def taskUpdate(userId):
         answers = taskData['answers']
     description = description or taskData['description']
     orderId = orderId or taskData['orderid']
-    isQrAnswer = isQrAnswer or taskData['isqranswer']
+    if isQrAnswer is None:
+        isQrAnswer = taskData['isqranswer']
 
     resp = _DB.execute(sql.updateTaskById, [orderId, title, description, question, answers, isQrAnswer, taskId])
     return jsonResponse(resp)

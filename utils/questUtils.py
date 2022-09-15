@@ -1,5 +1,3 @@
-from flask import make_response
-
 from constants import *
 import database.SQL_requests as sql
 from database.database import Database
@@ -26,20 +24,20 @@ def _checkHelper(sqlRequest: str, args: list, DB: Database) -> (bool, dict or st
 # ------------
 def checkQuestAuthor(questId, userId, DB, allowHelpers=False) -> (bool, dict or str):
     result = _checkAuthor(sql.selectQuestById, [questId], 'author', userId, DB)
-    if not result[0] and allowHelpers:
+    if not result and allowHelpers:
         return _checkHelper(sql.selectQuestByIdHelperid, [questId, userId], DB)
     return result
 
 
 def checkBranchAuthor(branchId, userId, DB, allowHelpers=False) -> (bool, dict or str):
     result = _checkAuthor(sql.selectQuestByBranchId, [branchId], 'author', userId, DB)
-    if not result[0] and allowHelpers:
+    if not result and allowHelpers:
         return _checkHelper(sql.selectQuestByBranchidHelperId, [branchId, userId], DB)
     return result
 
 
 def checkTaskAuthor(taskId, userId, DB, allowHelpers=False) -> (bool, dict or str):
     result = _checkAuthor(sql.selectQuestByTaskId, [taskId], 'author', userId, DB)
-    if not result[0] and allowHelpers:
+    if not result and allowHelpers:
         return _checkHelper(sql.selectQuestByTaskidHelperId, [taskId, userId], DB)
     return result

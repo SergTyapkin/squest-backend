@@ -37,6 +37,6 @@ def executeSQL():
 
     try:
         resp = _DB.execute(sqlText, manyResults=True)
-        return jsonResponse(resp)
+        return jsonResponse({"response": resp})
     except Exception as err:
         return jsonResponse(str(err), HTTP_INTERNAL_ERROR)

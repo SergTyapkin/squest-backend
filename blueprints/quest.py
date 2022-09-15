@@ -1,3 +1,6 @@
+import datetime
+import uuid
+
 from flask import Blueprint
 
 from utils.access import *
@@ -24,7 +27,14 @@ def questsGet(userId_logined):
     # Нужно выдать квест по id
     if questId is not None:
         res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
-        return questData
+        if res:
+            return questData
+
+        questData = _DB.execute(sql.selectPublishedQuestById, [questId])
+        if not questData:
+            return jsonResponse('Квеста не существует или нет прав доступа', HTTP_NOT_FOUND)
+
+        return jsonResponse(questData)
     # Нужно выдать квест по uid
     elif questUid is not None:
         questData = _DB.execute(sql.selectQuestByUid, [questUid])
@@ -40,11 +50,11 @@ def questsGet(userId_logined):
             resp = _DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
     # Нужно выдать вообще все квесты
     elif userId_logined is not None:
-        resp = _DB.execute(sql.selectAvailableQuestsByUseridx5, [userId_logined] * 5, manyResults=True)  # просмотр всех опубликованных квестов
+        resp = _DB.execute(sql.selectAvailableQuestsByUseridx7, [userId_logined] * 7, manyResults=True)  # просмотр всех опубликованных квестов
     else:
         resp = _DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
 
-    return jsonResponse(resp)
+    return jsonResponse({'quests': resp})
 
 
 @app.route("/uid")
@@ -76,7 +86,8 @@ def questCreate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.insertQuest, [title, description, userId, isPublished])
+    uid = str(uuid.uuid4())
+    resp = _DB.execute(sql.insertQuest, [uid, title, description, userId, isPublished])
 
     return jsonResponse(resp)
 
@@ -253,7 +264,7 @@ def helperGet(userId):
     if not res: return questData
 
     resp = _DB.execute(sql.selectHelpersUserNamesByQuestId, [questId], manyResults=True)
-    return jsonResponse(resp)
+    return jsonResponse({'helpers': resp})
 
 
 @app.route("/helpers", methods=["POST"])
@@ -332,3 +343,78 @@ def helperDelete(userId_logined):
 
     _DB.execute(sql.deleteHelperById, [id])
     return jsonResponse("Запись доступа удалена")
+
+
+# ---- statistics ---
+@app.route("/users/finished")
+def getFinishedUsers():
+    try:
+        req = request.json
+        questId = req['questId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.selectFinishedQuestPLayers, [questId], manyResults=True)
+    return jsonResponse({"players": resp})
+
+
+@app.route("/users/progresses")
+def getUsersProgresses():
+    try:
+        req = request.json
+        questId = req['questId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.selectPLayersProgressesByQuestid, [questId], manyResults=True)
+    return jsonResponse({"players": resp})
+
+
+@app.route("/progress/stats")
+@login_required_return_id
+def getUserProgressStats(userId):
+    try:
+        req = request.args
+        branchId = req['branchId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.selectProgressStatsByUseridBranchid, [userId, branchId])
+    resp['time'] = resp['time'].total_seconds()
+    return jsonResponse(resp)
+
+
+@app.route("/rating", methods=['POST'])
+@login_required_return_id
+def branchRatingVote(userId):
+    try:
+        req = request.json
+        branchId = req['branchId']
+        rating = int(req['rating'])
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    if rating < 1 or rating > 5:
+        return jsonResponse("rating может быть только от 0 до 5", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.updateProgressRatingByBranchidUserid, [rating, branchId, userId], manyResults=True)
+    if not resp:
+        return jsonResponse("Нет прав на голосование за рейтинг квеста", HTTP_NO_PERMISSIONS)
+    return jsonResponse(resp)
+
+
+@app.route("/stats")
+def getQuestStatistics():
+    try:
+        req = request.args
+        questId = req['questId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = _DB.execute(sql.selectQuestStatisticsByQiestid, [questId])
+    if not resp:
+        return jsonResponse("Квест не найден или в него пока никто не играл", HTTP_NOT_FOUND)
+
+    if resp['time']:
+        resp['time'] = resp['time'].total_seconds()
+    return jsonResponse(resp)
