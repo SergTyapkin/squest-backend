@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     username         TEXT NOT NULL UNIQUE,
     password         TEXT NOT NULL,
     email            TEXT DEFAULT NULL UNIQUE,
-    name             TEXT DEFAULT NULL UNIQUE,
+    name             TEXT DEFAULT NULL,
     isAdmin          BOOLEAN DEFAULT FALSE,
     joinedDate       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     isConfirmed      BOOLEAN DEFAULT FALSE,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS progresses (
     maxProgress  INT NOT NULL DEFAULT 0,
     isFinished   BOOL NOT NULL DEFAULT FALSE,
     ratingVote   FLOAT DEFAULT NULL,
-    started      TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    started      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     finished     TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     UNIQUE (userId, branchId)
 );
