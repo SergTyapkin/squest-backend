@@ -34,7 +34,7 @@ selectCreatedQuestsByUserid = \
     "GROUP BY users.id"
 
 selectCompletedBranchesByUserid = \
-    f"SELECT count(progresses.id) as branchesCompleted FROM users " \
+    f"SELECT count(progresses.id) as completedBranches FROM users " \
     "LEFT JOIN progresses ON progresses.userid = users.id " \
     "WHERE users.id = %s AND progresses.isfinished = True " \
     "GROUP BY users.id"
@@ -150,7 +150,7 @@ selectPublishedQuestsByAuthor = \
     ")"
 
 selectQuestById = \
-    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, users.username as authorName " \
+    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
     "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "WHERE quests.id = %s"
 
@@ -171,15 +171,15 @@ selectQuestUidById = \
     "WHERE id = %s"
 
 selectQuestByIdHelperid = \
-    "SELECT quests.id, author, title, description, isPublished, isLinkActive, users.username as authorName " \
-    "FROM quests JOIN users ON quests.author = users.id " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
+    "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "LEFT JOIN questshelpers on quests.id = questshelpers.questid " \
     "WHERE quests.id = %s AND questshelpers.userid = %s"
 
 
 selectQuestsByAuthorx2 = \
-    "SELECT quests.id, author, title, description, isPublished, isLinkActive, True as canEdit " \
-    "FROM quests " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, True as canEdit, users.username as authorName " \
+    "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "WHERE author = %s OR " \
     "(quests.id IN " \
     "   (SELECT questid FROM questshelpers" \
@@ -215,7 +215,7 @@ selectHelperById = \
 # # Если ты тоже в белом списке - надо добавить этот квест
 
 selectAvailableQuestsByUseridx7 = \
-    "SELECT quests.id, author, title, description, ispublished, islinkactive, users.username as authorName, True as canEdit " \
+    "SELECT quests.id, author, title, description, ispublished, islinkactive, previewUrl, users.username as authorName, True as canEdit " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
     "(author = %s) OR " \
@@ -228,7 +228,7 @@ selectAvailableQuestsByUseridx7 = \
     "" \
     "UNION " \
     "" \
-    "SELECT quests.id, author, title, description, ispublished, islinkactive, users.username as authorName, False as canEdit " \
+    "SELECT quests.id, author, title, description, ispublished, islinkactive, previewUrl, users.username as authorName, False as canEdit " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
     "(ispublished AND " \
@@ -251,7 +251,7 @@ selectAvailableQuestsByUseridx7 = \
 
 
 selectAvailableQuests = \
-    "SELECT quests.id, author, title, description, isPublished, isLinkActive, users.username as authorName " \
+    "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
     "(ispublished AND " \
@@ -382,7 +382,7 @@ selectQuestStatisticsByQiestid = \
     "AND progresses.isfinished = true " \
     "GROUP BY quests.id"
 
-# ----- UPDATES -----
+# ----- S -----
 updateUserChooseBranchByUserId = \
     "UPDATE users SET " \
     "chosenQuestId = %s, " \
@@ -394,7 +394,8 @@ updateQuestById = \
     "title = %s, " \
     "description = %s, " \
     "isPublished = %s, " \
-    "isLinkActive = %s " \
+    "isLinkActive = %s, " \
+    "previewUrl = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 

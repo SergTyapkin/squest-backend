@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS quests (
     author         SERIAL NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     isPublished    BOOL NOT NULL DEFAULT false,
     isModerated    BOOL NOT NULL DEFAULT false,
-    isLinkActive   BOOL NOT NULL DEFAULT false
+    isLinkActive   BOOL NOT NULL DEFAULT false,
+    previewUrl     TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS questsPrivacy (

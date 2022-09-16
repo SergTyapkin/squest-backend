@@ -14,8 +14,7 @@ from utils.utils import read_config
 _config = read_config('config.json')
 
 app = Flask(__name__)
-app.wsgi_app = Middleware(app.wsgi_app, url_prefix='/api',
-                          cors_origins=_config['cors-origins'])
+app.wsgi_app = Middleware(app.wsgi_app, url_prefix='/api', cors_origins=_config['cors-origins'])
 
 app.register_blueprint(user_app,   url_prefix='/user')
 app.register_blueprint(admin_app,  url_prefix='/admin')

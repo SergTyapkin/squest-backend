@@ -102,6 +102,7 @@ def questUpdate(userId):
         description = req.get('description')
         isPublished = req.get('isPublished')
         isLinkActive = req.get('isLinkActive')
+        previewUrl = req.get('previewUrl')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -112,8 +113,9 @@ def questUpdate(userId):
     description = description or questData['description']
     if isPublished is None: isPublished = questData['ispublished']
     if isLinkActive is None: isLinkActive = questData['islinkactive']
+    if previewUrl is None: previewUrl = questData['previewurl']
 
-    resp = _DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, questId])
+    resp = _DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, previewUrl, questId])
     return jsonResponse(resp)
 
 

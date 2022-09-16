@@ -39,8 +39,19 @@ def imageUpload(userId):
     return jsonResponse(resp)
 
 
-@app.route("/<imageId>", methods=["DELETE"])
+@app.route("", methods=["DELETE"])
 @login_required_return_id
-def imageDelete(userId, imageId):
+def imageDelete(userId):
+    try:
+        req = request.json
+        imageId = req['imageId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+
+    resp = _DB.execute(sql.selectImageById, [imageId])
+    if not resp:
+        return jsonResponse("Изображение не найдено", HTTP_NOT_FOUND)
+
     _DB.execute(sql.deleteImageByIdAuthor, [imageId, userId])
-    return jsonResponse("Изображение удалено")
+    return jsonResponse("Изображение удалено если вы его автор")
