@@ -165,14 +165,14 @@ def taskUpdate(userId):
     res, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
     if not res: return taskData
 
-    title = title or taskData['title']
-    question = question or taskData['question']
+    if title is None: title = taskData['title']
+    if question is None: question = taskData['question']
     if answers is not None:
         answers = list(map(str.lower, answers))
     else:
         answers = taskData['answers']
-    description = description or taskData['description']
-    orderId = orderId or taskData['orderid']
+    if description is None: description = taskData['description']
+    if orderId is None: orderId = taskData['orderid']
     if isQrAnswer is None:
         isQrAnswer = taskData['isqranswer']
 

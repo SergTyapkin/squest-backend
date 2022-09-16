@@ -109,8 +109,8 @@ def questUpdate(userId):
     res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
     if not res: return questData
 
-    title = title or questData['title']
-    description = description or questData['description']
+    if title is None: title = questData['title']
+    if isPublished is None: description = questData['description']
     if isPublished is None: isPublished = questData['ispublished']
     if isLinkActive is None: isLinkActive = questData['islinkactive']
     if previewUrl is None: previewUrl = questData['previewurl']

@@ -140,10 +140,10 @@ def userUpdate(userData):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    name = name or userData['name']
-    username = username or userData['username']
-    email = email or userData['email']
-    avatarUrl = avatarUrl or userData['avatarurl']
+    if name is None: name = userData['name']
+    if username is None: username = userData['username']
+    if email is None: email = userData['email']
+    if avatarUrl is None: avatarUrl = userData['avatarurl']
 
     try:
         resp = _DB.execute(sql.updateUserById, [username, name, email, avatarUrl, userData['id']])

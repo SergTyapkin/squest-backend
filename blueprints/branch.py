@@ -105,10 +105,10 @@ def branchUpdate(userId):
     res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
     if not res: return branchData
 
-    title = title or branchData['title']
-    description = description or branchData['description']
+    if title is None: title = branchData['title']
+    if description is None: description = branchData['description']
     if isPublished is None: isPublished = branchData['ispublished']
-    orderId = orderId or branchData['orderid']
+    if orderId is None: orderId = branchData['orderid']
 
     resp = _DB.execute(sql.updateBranchById, [orderId, title, description, isPublished, branchId])
     return jsonResponse(resp)
