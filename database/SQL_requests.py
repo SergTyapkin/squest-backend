@@ -508,7 +508,7 @@ deleteProgressByUserid = \
 insertImage = \
     "INSERT INTO images (author, type, bytes) " \
     "VALUES (%s, %s, %s) " \
-    "RETURNING *"
+    "RETURNING id, author, type"
 
 selectImageById = \
     "SELECT * FROM images " \
