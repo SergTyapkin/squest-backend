@@ -24,7 +24,7 @@ def _checkHelper(sqlRequest: str, args: list, DB: Database) -> (bool, dict or st
 # ------------
 def checkQuestAuthor(questId, userId, DB, allowHelpers=False) -> (bool, dict or str):
     result = _checkAuthor(sql.selectQuestById, [questId], 'author', userId, DB)
-    if not result and allowHelpers:
+    if not result[0] and allowHelpers:
         return _checkHelper(sql.selectQuestByIdHelperid, [questId, userId], DB)
     return result
 
