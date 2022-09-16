@@ -413,7 +413,7 @@ def getQuestStatistics():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectQuestStatisticsByQiestid, [questId])
+    resp = _DB.execute(sql.selectQuestStatisticsByQuestid, [questId])
     if not resp:
         return jsonResponse("Квест не найден или в него пока никто не играл", HTTP_NOT_FOUND)
 

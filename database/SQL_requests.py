@@ -373,7 +373,7 @@ selectFinishedQuestPLayers = \
     selectPLayersProgressesByQuestid + \
     " AND progresses.isfinished = True"
 
-selectQuestStatisticsByQiestid = \
+selectQuestStatisticsByQuestid = \
     "SELECT quests.id, avg(ratingvote) as rating, avg(finished - started) as time, count(progresses.id) as played " \
     "FROM progresses " \
     "JOIN branches ON progresses.branchid = branches.id " \

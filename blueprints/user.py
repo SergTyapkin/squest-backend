@@ -75,10 +75,14 @@ def userGet(userData):
 
     def addRating(obj, id):
         res = _DB.execute(sql.selectRatings, [], manyResults=True)
+        positionDecrease = 0
         for idx, rating in enumerate(res):
-            if rating['id'] == id:
+            if rating['rating'] is None:
+                positionDecrease += 1
+
+            if str(rating['id']) == str(id):
                 obj['rating'] = rating['rating'] or 0
-                obj['position'] = idx + 1
+                obj['position'] = idx + 1 - positionDecrease
                 return
         obj['rating'] = 0
         obj['position'] = len(res)
