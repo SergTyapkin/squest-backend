@@ -506,7 +506,7 @@ deleteProgressByUserid = \
 
 # --- IMAGES ---
 insertImage = \
-    "INSERT INTO images (author, type, base64) " \
+    "INSERT INTO images (author, type, bytes) " \
     "VALUES (%s, %s, %s) " \
     "RETURNING *"
 

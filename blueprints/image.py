@@ -1,3 +1,6 @@
+from io import BytesIO
+
+from PIL import Image
 from flask import Blueprint, Response
 
 from utils.access import *
@@ -8,16 +11,19 @@ import base64
 
 app = Blueprint('images', __name__)
 
-_DB = Database(read_config("config.json"))
+_config = read_config("config.json")
+_DB = Database(_config)
 
+MAX_SIZE = _config['max_image_size']
 
 @app.route("/<imageId>")
 def imageGet(imageId):
     resp = _DB.execute(sql.selectImageById, [imageId])
     if not resp:
         return Response("Изображение не найдено", HTTP_NOT_FOUND)
-    base64Data = resp['base64']
-    imageBytes = base64.b64decode(base64Data)
+    # base64Data = resp['base64']
+    # imageBytes = base64.b64decode(base64Data)
+    imageBytes = resp['bytes']
     return Response(imageBytes, mimetype=f'image/{resp["type"]}')
 
 
@@ -35,7 +41,27 @@ def imageUpload(userId):
     [dataUrl, base64Data] = dataUrl.split(',')
     imageType = dataUrl[_leftLen: -_rightLen]
 
-    resp = _DB.execute(sql.insertImage, [userId, imageType, base64Data])
+    imageBytes = base64.b64decode(base64Data)
+    img = Image.open(BytesIO(imageBytes))  # open image
+
+    (wOrig, hOrig) = img.size
+    maxSize = max(wOrig, hOrig)
+
+    if maxSize > MAX_SIZE:  # image bigger than MAX_SIZE. Need to resize
+        multiplier = maxSize / MAX_SIZE
+        w = int(wOrig / multiplier)
+        h = int(hOrig / multiplier)
+
+        img = img.resize((w, h), Image.Resampling.LANCZOS)  # resize to MAX_SIZE
+
+    optimized = BytesIO()
+    saveFormat = 'JPEG'
+    if img.mode == 'RGBA':
+        saveFormat = 'PNG'
+    img.save(optimized, format=saveFormat, optimize=True, quality=85)
+    hex_data = optimized.getvalue()
+
+    resp = _DB.execute(sql.insertImage, [userId, imageType, hex_data])
     return jsonResponse(resp)
 
 

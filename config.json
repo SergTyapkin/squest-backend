@@ -5,6 +5,8 @@
     "password": "97b7496d8fb6698d0cd6a624017f70baf3d84e454974e1f41593cb28eff44c89",
     "database": "d24p7gda8btqjf",
 
+    "max_image_size": 512,
+
     "api_port": "9000",
     "debug": "False",
 
