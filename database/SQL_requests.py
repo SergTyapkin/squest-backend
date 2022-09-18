@@ -138,7 +138,7 @@ insertTask = \
 
 # ----- SELECTS -----
 selectPublishedQuestsByAuthor = \
-    "SELECT id, author, title, description, isPublished FROM quests " \
+    "SELECT id, author, title, description, isPublished, previewUrl FROM quests " \
     "WHERE author = %s AND ( " \
     "   isPublished = true OR " \
     "   (id IN " \
@@ -155,13 +155,13 @@ selectQuestById = \
     "WHERE quests.id = %s"
 
 selectPublishedQuestById = \
-    "SELECT quests.id, author, title, description, isPublished, users.username as authorName " \
+    "SELECT quests.id, author, title, description, isPublished, previewUrl, users.username as authorName " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE quests.id = %s " \
     "AND ispublished = true"
 
 selectQuestByUid = \
-    "SELECT quests.id, author, title, description, isPublished, users.username as authorName " \
+    "SELECT quests.id, author, title, description, isPublished, previewUrl, users.username as authorName " \
     "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "WHERE uid = %s " \
     "AND islinkactive = true"
