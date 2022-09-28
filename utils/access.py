@@ -1,15 +1,12 @@
 import hashlib
 from functools import wraps
 
-from flask import request, make_response
+from flask import request
 
 import database.SQL_requests as sql
+from connctions import DB
 from constants import *
-from database.database import *
 from utils.utils import *
-
-_config = read_config("config.json")
-_DB = Database(_config)
 
 
 def hash_sha256(auth_string: str) -> str:
@@ -20,7 +17,7 @@ def get_logined_userid():
     token = request.cookies.get('session_token')
     if not token:
         return ''
-    session = _DB.execute(sql.selectUserIdBySessionToken, [token])
+    session = DB.execute(sql.selectUserIdBySessionToken, [token])
     if len(session) == 0:
         return ''
     return session['userid']
@@ -30,7 +27,7 @@ def get_logined_user():
     token = request.cookies.get('session_token')
     if not token:
         return None
-    result = _DB.execute(sql.selectUserDataBySessionToken, [token])
+    result = DB.execute(sql.selectUserDataBySessionToken, [token])
     if len(result) == 0:
         return None
     return result
