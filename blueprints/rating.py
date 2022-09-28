@@ -1,16 +1,15 @@
 from flask import Blueprint
 
+from connctions import DB
 from utils.access import *
 from utils.utils import *
 
 app = Blueprint('ratings', __name__)
 
-_DB = Database(read_config("config.json"))
-
 
 @app.route("")
 def userAuth():
-    resp = _DB.execute(sql.selectRatings, manyResults=True)
+    resp = DB.execute(sql.selectRatings, manyResults=True)
     notNoneRatings = []
     noneRatings = []
     for rating in resp:

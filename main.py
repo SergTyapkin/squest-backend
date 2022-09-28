@@ -1,5 +1,6 @@
 import os
 from flask import Flask
+from flask_mail import Mail
 
 from blueprints.user import app as user_app
 from blueprints.admin import app as admin_app
@@ -23,6 +24,15 @@ app.register_blueprint(branch_app, url_prefix='/branch')
 app.register_blueprint(task_app,   url_prefix='/task')
 app.register_blueprint(image_app,   url_prefix='/image')
 app.register_blueprint(rating_app,   url_prefix='/ratings')
+
+app.config['MAIL_SERVER'] = _config['SMTP_mail_server_host']
+app.config['MAIL_PORT'] = _config['SMTP_mail_server_port']
+app.config['MAIL_USE_TLS'] = _config['SMTP_mail_server_use_tls']
+app.config['MAIL_USERNAME'] = _config['mail_username']
+app.config['MAIL_DEFAULT_SENDER'] = _config['mail_username']
+app.config['MAIL_PASSWORD'] = _config['mail_password']
+
+mail = Mail(app)
 
 
 @app.route('/')

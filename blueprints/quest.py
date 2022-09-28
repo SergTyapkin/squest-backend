@@ -3,14 +3,13 @@ import uuid
 
 from flask import Blueprint
 
+from connctions import DB
 from utils.access import *
 from constants import *
 from utils.questUtils import checkQuestAuthor
 from utils.utils import *
 
 app = Blueprint('quests', __name__)
-
-_DB = Database(read_config("config.json"))
 
 
 @app.route("")
@@ -26,18 +25,18 @@ def questsGet(userId_logined):
 
     # Нужно выдать квест по id
     if questId is not None:
-        res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
+        res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
         if res:
             return questData
 
-        questData = _DB.execute(sql.selectPublishedQuestById, [questId])
+        questData = DB.execute(sql.selectPublishedQuestById, [questId])
         if not questData:
             return jsonResponse('Квеста не существует или нет прав доступа', HTTP_NOT_FOUND)
 
         return jsonResponse(questData)
     # Нужно выдать квест по uid
     elif questUid is not None:
-        questData = _DB.execute(sql.selectQuestByUid, [questUid])
+        questData = DB.execute(sql.selectQuestByUid, [questUid])
         if not questData:
             return jsonResponse('Квеста не существует или нет прав доступа', HTTP_NO_PERMISSIONS)
 
@@ -45,14 +44,14 @@ def questsGet(userId_logined):
     # Нужно выдать все квесты юзера
     elif userId is not None:
         if str(userId_logined) == userId:
-            resp = _DB.execute(sql.selectQuestsByAuthorx2, [userId_logined] * 2, manyResults=True)  # просмотр всех своих квестов
+            resp = DB.execute(sql.selectQuestsByAuthorx2, [userId_logined] * 2, manyResults=True)  # просмотр всех своих квестов
         else:
-            resp = _DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
+            resp = DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
     # Нужно выдать вообще все квесты
     elif userId_logined is not None:
-        resp = _DB.execute(sql.selectAvailableQuestsByUseridx7, [userId_logined] * 7, manyResults=True)  # просмотр всех опубликованных квестов
+        resp = DB.execute(sql.selectAvailableQuestsByUseridx7, [userId_logined] * 7, manyResults=True)  # просмотр всех опубликованных квестов
     else:
-        resp = _DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
+        resp = DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
 
     return jsonResponse({'quests': resp})
 
@@ -66,10 +65,10 @@ def questsUidGet(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId, DB, allowHelpers=True)
     if not res:
         return questData
-    resp = _DB.execute(sql.selectQuestUidById, [questData['id']])
+    resp = DB.execute(sql.selectQuestUidById, [questData['id']])
     if not resp:
         return jsonResponse("Квеста не существует или нет прав доступа", HTTP_NO_PERMISSIONS)
     return jsonResponse(resp)
@@ -87,7 +86,7 @@ def questCreate(userId):
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     uid = str(uuid.uuid4())
-    resp = _DB.execute(sql.insertQuest, [uid, title, description, userId, isPublished])
+    resp = DB.execute(sql.insertQuest, [uid, title, description, userId, isPublished])
 
     return jsonResponse(resp)
 
@@ -106,7 +105,7 @@ def questUpdate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId, DB, allowHelpers=True)
     if not res: return questData
 
     if title is None: title = questData['title']
@@ -115,7 +114,7 @@ def questUpdate(userId):
     if isLinkActive is None: isLinkActive = questData['islinkactive']
     if previewUrl is None: previewUrl = questData['previewurl']
 
-    resp = _DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, previewUrl, questId])
+    resp = DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, previewUrl, questId])
     return jsonResponse(resp)
 
 
@@ -128,10 +127,10 @@ def questDelete(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB)
+    res, questData = checkQuestAuthor(questId, userId, DB)
     if not res: return questData
 
-    _DB.execute(sql.deleteQuestById, [questId])
+    DB.execute(sql.deleteQuestById, [questId])
     return jsonResponse("Квест удален")
 
 
@@ -145,7 +144,7 @@ def questChoose(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.updateUserChooseBranchByUserId, [questId, branchId, userId])
+    resp = DB.execute(sql.updateUserChooseBranchByUserId, [questId, branchId, userId])
     return jsonResponse(resp)
 
 
@@ -158,10 +157,10 @@ def privacyGet(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId, DB, allowHelpers=True)
     if not res: return questData
 
-    resp = _DB.execute(sql.selectPrivacyUserNamesByQuestId, [questId], manyResults=True)
+    resp = DB.execute(sql.selectPrivacyUserNamesByQuestId, [questId], manyResults=True)
     return jsonResponse(resp)
 
 
@@ -180,16 +179,16 @@ def privacyCreate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByUsername, [userName])
+        resp = DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
 
-    res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
     if not res: return questData
 
     try:
-        resp = _DB.execute(sql.insertPrivacy, [userId, questId, isInBlackList])
+        resp = DB.execute(sql.insertPrivacy, [userId, questId, isInBlackList])
     except:
         return jsonResponse("Пользователя не существует или уже настроен", HTTP_DATA_CONFLICT)
     return jsonResponse(resp)
@@ -211,16 +210,16 @@ def privacyUpdate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByUsername, [userName])
+        resp = DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
 
-    res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
     if not res: return questData
 
     try:
-        resp = _DB.execute(sql.updatePrivacyByIdQuestid, [userId, isInBlackList, id, questId])
+        resp = DB.execute(sql.updatePrivacyByIdQuestid, [userId, isInBlackList, id, questId])
     except:
         return jsonResponse("Пользователя не существует или уже настроен", HTTP_DATA_CONFLICT)
     return jsonResponse(resp)
@@ -239,16 +238,16 @@ def privacyDelete(userId_logined):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectPrivacyById, [id])
+    resp = DB.execute(sql.selectPrivacyById, [id])
     questId = resp['questid']
 
-    res, questData = checkQuestAuthor(questId, userId_logined, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
     if not res: return questData
 
     # if isAll == 'true':
-    #     _DB.execute(sql.deletePrivacyByQuestid, [questId])
+    #     DB.execute(sql.deletePrivacyByQuestid, [questId])
     # else:
-    _DB.execute(sql.deletePrivacyById, [id])
+    DB.execute(sql.deletePrivacyById, [id])
 
     return jsonResponse("Запись доступа удалена")
 
@@ -262,10 +261,10 @@ def helperGet(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB)
+    res, questData = checkQuestAuthor(questId, userId, DB)
     if not res: return questData
 
-    resp = _DB.execute(sql.selectHelpersUserNamesByQuestId, [questId], manyResults=True)
+    resp = DB.execute(sql.selectHelpersUserNamesByQuestId, [questId], manyResults=True)
     return jsonResponse({'helpers': resp})
 
 
@@ -283,16 +282,16 @@ def helperCreate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByUsername, [userName])
+        resp = DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
 
-    res, questData = checkQuestAuthor(questId, userId_logined, _DB)
+    res, questData = checkQuestAuthor(questId, userId_logined, DB)
     if not res: return questData
 
     try:
-        resp = _DB.execute(sql.insertHelper, [userId, questId])
+        resp = DB.execute(sql.insertHelper, [userId, questId])
     except:
         return jsonResponse("Пользователя не существует или уже настроен", HTTP_DATA_CONFLICT)
     return jsonResponse(resp)
@@ -313,16 +312,16 @@ def helperUpdate(userId_logined):
     if userId is None:
         if userName is None:
             return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = _DB.execute(sql.selectUserByUsername, [userName])
+        resp = DB.execute(sql.selectUserByUsername, [userName])
         if not resp:
             return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
         userId = resp['id']
 
-    res, questData = checkQuestAuthor(questId, userId_logined, _DB)
+    res, questData = checkQuestAuthor(questId, userId_logined, DB)
     if not res: return questData
 
     try:
-        resp = _DB.execute(sql.updateHelperByIdQuestid, [userId, id, questId])
+        resp = DB.execute(sql.updateHelperByIdQuestid, [userId, id, questId])
     except:
         return jsonResponse("Пользователя не существует или уже настроен", HTTP_DATA_CONFLICT)
     return jsonResponse(resp)
@@ -337,13 +336,13 @@ def helperDelete(userId_logined):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectHelperById, [id])
+    resp = DB.execute(sql.selectHelperById, [id])
     questId = resp['questid']
 
-    res, questData = checkQuestAuthor(questId, userId_logined, _DB)
+    res, questData = checkQuestAuthor(questId, userId_logined, DB)
     if not res: return questData
 
-    _DB.execute(sql.deleteHelperById, [id])
+    DB.execute(sql.deleteHelperById, [id])
     return jsonResponse("Запись доступа удалена")
 
 
@@ -356,7 +355,7 @@ def getFinishedUsers():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectFinishedQuestPLayers, [questId], manyResults=True)
+    resp = DB.execute(sql.selectFinishedQuestPLayers, [questId], manyResults=True)
     return jsonResponse({"players": resp})
 
 
@@ -368,7 +367,7 @@ def getUsersProgresses():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectPLayersProgressesByQuestid, [questId], manyResults=True)
+    resp = DB.execute(sql.selectPLayersProgressesByQuestid, [questId], manyResults=True)
     return jsonResponse({"players": resp})
 
 
@@ -381,7 +380,7 @@ def getUserProgressStats(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectProgressStatsByUseridBranchid, [userId, branchId])
+    resp = DB.execute(sql.selectProgressStatsByUseridBranchid, [userId, branchId])
     resp['time'] = resp['time'].total_seconds()
     return jsonResponse(resp)
 
@@ -399,7 +398,7 @@ def branchRatingVote(userId):
     if rating < 1 or rating > 5:
         return jsonResponse("rating может быть только от 0 до 5", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.updateProgressRatingByBranchidUserid, [rating, branchId, userId], manyResults=True)
+    resp = DB.execute(sql.updateProgressRatingByBranchidUserid, [rating, branchId, userId], manyResults=True)
     if not resp:
         return jsonResponse("Нет прав на голосование за рейтинг квеста", HTTP_NO_PERMISSIONS)
     return jsonResponse(resp)
@@ -413,7 +412,7 @@ def getQuestStatistics():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.selectQuestStatisticsByQuestid, [questId])
+    resp = DB.execute(sql.selectQuestStatisticsByQuestid, [questId])
     if not resp:
         return jsonResponse("Квест не найден или в него пока никто не играл", HTTP_NOT_FOUND)
 

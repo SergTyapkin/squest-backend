@@ -1,9 +1,8 @@
 {
-    "host": "ec2-52-214-125-106.eu-west-1.compute.amazonaws.com",
-    "port": 5432,
-    "user": "yoffybvokztlqn",
-    "password": "97b7496d8fb6698d0cd6a624017f70baf3d84e454974e1f41593cb28eff44c89",
-    "database": "d24p7gda8btqjf",
+    "db_host": "ec2-52-214-125-106.eu-west-1.compute.amazonaws.com",
+    "db_port": 5432,
+    "db_user": "yoffybvokztlqn",
+    "db_database": "d24p7gda8btqjf",
 
     "max_image_size": 512,
 
@@ -17,5 +16,10 @@
         "https://squest.herokuapp.com",
         "http://squest.ml",
         "https://squest.ml"
-    ]
+    ],
+
+    "SMTP_mail_server_host": "smtp.googlemail.com",
+    "SMTP_mail_server_port": 587,
+    "SMTP_mail_server_use_tls": true,
+    "mail_username": "squest.studio@gmail.com"
 }

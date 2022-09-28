@@ -12,6 +12,10 @@ insertSession = \
     "INSERT INTO sessions (userId, token, expires) " \
     "VALUES (%s, %s, %s)"
 
+insertSecretCode = \
+    "INSERT INTO secretCodes (userId, code, type, expires) " \
+    "VALUES (%s, %s, %s, %s)"
+
 # ----- SELECTS -----
 selectUserByUsernamePassword = \
     f"SELECT {_userColumns} FROM users " \
@@ -43,6 +47,10 @@ selectUserByUsername = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE username = %s"
 
+selectUserByEmail = \
+    f"SELECT {_userColumns} FROM users " \
+    "WHERE LOWER(email) = LOWER(%s)"
+
 selectUserIdBySessionToken = \
     "SELECT userId FROM sessions " \
     "WHERE token = %s"
@@ -57,6 +65,12 @@ selectUserDataBySessionToken = \
     "LEFT JOIN quests ON users.chosenquestid = quests.id " \
     "LEFT JOIN branches ON users.chosenbranchid = branches.id " \
     "WHERE token = %s"
+
+selectSecretCodeByUserIdType = \
+    "SELECT * FROM secretCodes " \
+    "WHERE userId = %s AND " \
+    "type = %s AND " \
+    "expires > NOW()"
 
 # ----- UPDATES -----
 updateUserConfirmationById = \
@@ -86,6 +100,14 @@ updateUserPasswordByIdPassword = \
     "WHERE id = %s AND password = %s " \
     "RETURNING id"
 
+updateUserPasswordBySecretcode = \
+    "UPDATE users " \
+    "SET password = %s " \
+    "FROM secretCodes " \
+    "WHERE secretCodes.userId = users.id AND " \
+    "secretCodes.code = %s " \
+    "RETURNING *"
+
 
 # ----- DELETES -----
 deleteExpiredSessions = \
@@ -100,6 +122,14 @@ deleteSessionByToken = \
     "DELETE FROM sessions " \
     "WHERE token = %s"
 
+deleteExpiredSecretCodes = \
+    "DELETE FROM secretCodes "\
+    "WHERE expires <= NOW()"
+
+deleteSecretCodeByUseridCode = \
+    "DELETE FROM secretCodes " \
+    "WHERE userId = %s AND " \
+    "code = %s"
 
 # -----------------
 # -- Quests part --

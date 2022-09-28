@@ -89,6 +89,16 @@ CREATE TABLE IF NOT EXISTS images (
     base64         TEXT NOT NULL
 );
 
+
+CREATE TABLE IF NOT EXISTS secretCodes (
+    id             SERIAL PRIMARY KEY,
+    userId         SERIAL REFERENCES users(id) ON DELETE CASCADE,
+    code           TEXT NOT NULL UNIQUE,
+    type           TEXT NOT NULL,
+    expires        TIMESTAMP WITH TIME ZONE NOT NULL,
+    UNIQUE (userId, type)
+);
+
 ----------
 DO $$
 BEGIN

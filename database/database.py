@@ -3,22 +3,25 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
 class Database:
-    def __new__(cls, config):
+    def __new__(cls, user, password, host, port, dbname):
         if not hasattr(cls, 'instance'):
-            cls.config = config
+            cls.user = user
+            cls.password = password
+            cls.host = host
+            cls.port = port
+            cls.dbname = dbname
             cls.init(cls)
             cls.instance = super(Database, cls).__new__(cls)
         return cls.instance
 
     def init(self):
-        config = self.config
         try:
             self.db = psycopg2.connect(
-                user=config["user"],
-                password=config["password"],
-                host=config["host"],
-                port=config["port"],
-                dbname=config["database"]
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                port=self.port,
+                dbname=self.dbname
             )
             self.db.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         except psycopg2.OperationalError as err:
@@ -30,16 +33,16 @@ class Database:
             elif err.args[0] == 1049:
                 print('Не найдена база данных')
                 self.db = psycopg2.connect(
-                    user=config["user"],
-                    password=config["password"],
-                    host=config["host"],
-                    port=config["port"],
+                    user=self.user,
+                    password=self.password,
+                    host=self.host,
+                    port=self.port,
                 )
                 self.db.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
                 print("Создание базы даных...")
                 try:
                     self.cursor = self.db.cursor()
-                    self.cursor.execute("CREATE DATABASE " + config["database"])
+                    self.cursor.execute("CREATE DATABASE " + self.dbname)
                     print("База данных создана. Перезапустите сервер.")
                 except psycopg2.Error as error:
                     if error.pgcode == "42P04":

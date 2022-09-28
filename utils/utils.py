@@ -1,4 +1,5 @@
 import json
+import os
 
 from flask import jsonify, make_response
 
@@ -23,10 +24,17 @@ def read_config(filepath: str) -> dict:
         file = open(filepath, "r")
         config = json.load(file)
         file.close()
-        config["proxy_host"] = ""
+
+        if "db_password" not in config:
+            config["db_password"] = os.environ["DATABASE_PASSWORD"]
+
+        if "mail_password" not in config:
+            config["mail_password"] = os.environ["MAIL_PASSWORD"]
+
         return config
-    except:
+    except Exception as e:
         print("Can't open and serialize json:", filepath)
+        print(e)
         exit()
 
 

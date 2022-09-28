@@ -3,6 +3,7 @@ from io import BytesIO
 from PIL import Image
 from flask import Blueprint, Response
 
+from connctions import config, DB
 from utils.access import *
 from utils.questUtils import *
 from utils.utils import *
@@ -11,14 +12,11 @@ import base64
 
 app = Blueprint('images', __name__)
 
-_config = read_config("config.json")
-_DB = Database(_config)
-
-MAX_SIZE = _config['max_image_size']
+MAX_SIZE = config['max_image_size']
 
 @app.route("/<imageId>")
 def imageGet(imageId):
-    resp = _DB.execute(sql.selectImageById, [imageId])
+    resp = DB.execute(sql.selectImageById, [imageId])
     if not resp:
         return Response("Изображение не найдено", HTTP_NOT_FOUND)
     # base64Data = resp['base64']
@@ -61,7 +59,7 @@ def imageUpload(userId):
     img.save(optimized, format=saveFormat, optimize=True, quality=85)
     hex_data = optimized.getvalue()
 
-    resp = _DB.execute(sql.insertImage, [userId, imageType, hex_data])
+    resp = DBexecute(sql.insertImage, [userId, imageType, hex_data])
     return jsonResponse(resp)
 
 
@@ -75,9 +73,9 @@ def imageDelete(userId):
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
 
-    resp = _DB.execute(sql.selectImageById, [imageId])
+    resp = DB.execute(sql.selectImageById, [imageId])
     if not resp:
         return jsonResponse("Изображение не найдено", HTTP_NOT_FOUND)
 
-    _DB.execute(sql.deleteImageByIdAuthor, [imageId, userId])
+    DB.execute(sql.deleteImageByIdAuthor, [imageId, userId])
     return jsonResponse("Изображение удалено если вы его автор")

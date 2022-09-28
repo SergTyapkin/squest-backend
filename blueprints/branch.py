@@ -1,12 +1,11 @@
 from flask import Blueprint
 
+from connctions import DB
 from utils.access import *
 from utils.questUtils import *
 from utils.utils import *
 
 app = Blueprint('branches', __name__)
-
-_DB = Database(read_config("config.json"))
 
 
 @app.route("")
@@ -21,25 +20,25 @@ def branchesGet(userId):
 
     # Нужно выдать ветку по id
     if branchId is not None:
-        branchData = _DB.execute(sql.selectQuestByBranchId, [branchId])
-        isAuthor = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)[0]
+        branchData = DB.execute(sql.selectQuestByBranchId, [branchId])
+        isAuthor = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]
         # Если юзер залогинен и юзер - автор квеста ветки
         if branchData and (branchData['ispublished'] or isAuthor):
             # Добавим прогресс пользователя
-            resp = _DB.execute(sql.selectProgressByUseridBranchid, [userId, branchId])
+            resp = DB.execute(sql.selectProgressByUseridBranchid, [userId, branchId])
             branchData['progress'] = resp.get('maxprogress') or 0
             # Добавим длину ветки
-            resp = _DB.execute(sql.selectBranchLengthById, [branchId])
+            resp = DB.execute(sql.selectBranchLengthById, [branchId])
             branchData['length'] = max(resp['length'] - 1, 0)
             return jsonResponse(branchData)
         else:
             return jsonResponse("Ветка не опубликована, а вы не автор", HTTP_NO_PERMISSIONS)
     # Нужно выдать все ветки квеста
     elif questId is not None:
-        if userId is not None and checkQuestAuthor(questId, userId, _DB, allowHelpers=True)[0]:  # Если юзер залогинен и юзер - автор квеста
-            resp = _DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # можно смотреть все ветки квеста
+        if userId is not None and checkQuestAuthor(questId, userId, DB, allowHelpers=True)[0]:  # Если юзер залогинен и юзер - автор квеста
+            resp = DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # можно смотреть все ветки квеста
         else:
-            resp = _DB.execute(sql.selectPublishedBranchesByQuestid, [questId], manyResults=True)  # иначе - только опубликованные
+            resp = DB.execute(sql.selectPublishedBranchesByQuestid, [questId], manyResults=True)  # иначе - только опубликованные
         return jsonResponse({'branches': resp})
     # Не пришло ни одного id
     return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
@@ -56,13 +55,13 @@ def branchCreate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId, DB, allowHelpers=True)
     if not res: return questData
 
-    resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
+    resp = DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
     maxOrderId = resp['maxorderid'] or 0
 
-    resp = _DB.execute(sql.insertBranch, [questId, title, description, maxOrderId + 1])
+    resp = DB.execute(sql.insertBranch, [questId, title, description, maxOrderId + 1])
     return jsonResponse(resp)
 
 
@@ -76,16 +75,16 @@ def branchCreateMany(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, questData = checkQuestAuthor(questId, userId, _DB, allowHelpers=True)
+    res, questData = checkQuestAuthor(questId, userId, DB, allowHelpers=True)
     if not res: return questData
 
-    resp = _DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
+    resp = DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
     maxOrderId = resp['maxorderid'] or 0
 
     resp = []
     for branch in branches:
         maxOrderId += 1
-        resp += [_DB.execute(sql.insertBranch, [questId, branch['title'], branch['description'], maxOrderId])]
+        resp += [DB.execute(sql.insertBranch, [questId, branch['title'], branch['description'], maxOrderId])]
     return jsonResponse({'branches': resp})
 
 
@@ -102,7 +101,7 @@ def branchUpdate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
+    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
     if not res: return branchData
 
     if title is None: title = branchData['title']
@@ -110,7 +109,7 @@ def branchUpdate(userId):
     if isPublished is None: isPublished = branchData['ispublished']
     if orderId is None: orderId = branchData['orderid']
 
-    resp = _DB.execute(sql.updateBranchById, [orderId, title, description, isPublished, branchId])
+    resp = DB.execute(sql.updateBranchById, [orderId, title, description, isPublished, branchId])
     return jsonResponse(resp)
 
 
@@ -123,18 +122,18 @@ def branchDelete(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
+    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
     if not res: return branchData
 
-    _DB.execute(sql.deleteBranchById, [branchId])
+    DB.execute(sql.deleteBranchById, [branchId])
 
     # Make orderids actual
     questId = branchData['questid']
-    resp = _DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # получаем все ветки
+    resp = DB.execute(sql.selectBranchesByQuestid, [questId], manyResults=True)  # получаем все ветки
     idx = 1
     for branch in resp:
         if branch['orderid'] != idx:
-            resp[idx-1] = _DB.execute(sql.updateBranchOrderidById, [idx, branch['id']])
+            resp[idx-1] = DB.execute(sql.updateBranchOrderidById, [idx, branch['id']])
         idx += 1
 
     return jsonResponse(resp)
@@ -149,6 +148,6 @@ def progressReset(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = _DB.execute(sql.updateProgressByUseridBranchid, [0, userId, branchId])
+    resp = DB.execute(sql.updateProgressByUseridBranchid, [0, userId, branchId])
     return jsonResponse(resp)
 

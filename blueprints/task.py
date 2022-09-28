@@ -1,13 +1,12 @@
 from flask import Blueprint
 
+from connctions import DB
 from utils.access import *
 from utils.questUtils import *
 from utils.utils import *
 
 
 app = Blueprint('tasks', __name__)
-
-_DB = Database(read_config("config.json"))
 
 
 @app.route("")
@@ -22,27 +21,27 @@ def tasksGet(userId):
 
     # Нужно выдать таск по id
     if taskId is not None:
-        isAuthor, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
+        isAuthor, taskData = checkTaskAuthor(taskId, userId, DB, allowHelpers=True)
         if not isAuthor: return taskData
 
         return jsonResponse(taskData)
     # Нужно выдать все таски ветки
     elif branchId is not None:
         # Можно смотреть только если юзер залогинен и юзер - автор ветки
-        if userId is None or not checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)[0]:
+        if userId is None or not checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]:
             return jsonResponse("Вы не являетесь автором ветки", HTTP_NO_PERMISSIONS)
-        resp = _DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
+        resp = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
         return jsonResponse({'tasks': resp})
     # Не пришло ни одного id
     return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
 
 def getOrCreateUserProgress(userData):
-    resp = _DB.execute(sql.selectProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
+    resp = DB.execute(sql.selectProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
     try:
         progress = resp['progress']
     except KeyError:  # прогресса нет - надо создать нулевой прогресс
-        resp = _DB.execute(sql.insertProgress, [userData['id'], userData['chosenbranchid']])
+        resp = DB.execute(sql.insertProgress, [userData['id'], userData['chosenbranchid']])
         progress = resp['progress']
     return progress
 
@@ -53,9 +52,9 @@ def tasksGetLast(userData):
     if userData['chosenbranchid'] is None or userData['chosenquestid'] is None:
         return jsonResponse("Квест или ветка не выбраны", HTTP_INVALID_DATA)
 
-    questResp = _DB.execute(sql.selectQuestById, [userData['chosenquestid']])
-    isAuthor = checkQuestAuthor(questResp['id'], userData['id'], _DB, allowHelpers=True)[0]
-    branchResp = _DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
+    questResp = DB.execute(sql.selectQuestById, [userData['chosenquestid']])
+    isAuthor = checkQuestAuthor(questResp['id'], userData['id'], DB, allowHelpers=True)[0]
+    branchResp = DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
     # Можно получить только последний таск в выбранной ветке и квесте только если
     # ветка и квест опубликованы или юзер - автор
     if not isAuthor and (not questResp['ispublished'] or not branchResp['ispublished']):
@@ -63,7 +62,7 @@ def tasksGetLast(userData):
 
     progress = getOrCreateUserProgress(userData)
 
-    resp = _DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
+    resp = DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
     # Добавим к ответу названия квеста и ветки
     resp['questtitle'] = questResp['title']
     resp['branchtitle'] = branchResp['title']
@@ -74,7 +73,7 @@ def tasksGetLast(userData):
     resp['length'] = max(branchResp['length'] - 1, 0)
 
     # Определим кол-во заданий, и уберем поле question, если задание - последнее
-    maxOrderid = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [userData['chosenbranchid']])
+    maxOrderid = DB.execute(sql.selectTaskMaxOrderidByBranchid, [userData['chosenbranchid']])
     if maxOrderid['maxorderid'] == resp['orderid']:
         del resp['question']
 
@@ -92,10 +91,10 @@ def tasksCheckAnswer(userData):
 
     progress = getOrCreateUserProgress(userData)
 
-    task = _DB.execute(sql.selectTaskAnswersByBranchidNumber, [userData['chosenbranchid'], progress])
+    task = DB.execute(sql.selectTaskAnswersByBranchidNumber, [userData['chosenbranchid'], progress])
     for answer in task['answers']:
         if answer == userAnswer or answer == '*':  # если настроен ответ '*' - принимается любой ответ
-            resp = _DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
+            resp = DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
             return jsonResponse(resp)
 
     return jsonResponse("Ответ неверен", HTTP_ANSWER_MISS)
@@ -114,13 +113,13 @@ def taskCreate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
+    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
     if not res: return branchData
 
-    resp = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
+    resp = DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
     maxOrderId = resp['maxorderid'] or 0
 
-    resp = _DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId + 1])
+    resp = DB.execute(sql.insertTask, [branchId, title, description, question, answers, maxOrderId + 1])
     return jsonResponse(resp)
 
 
@@ -134,16 +133,16 @@ def taskCreateMany(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, _DB, allowHelpers=True)
+    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
     if not res: return branchData
 
-    resp = _DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
+    resp = DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
     maxOrderId = resp['maxorderid'] or 0
 
     resp = []
     for task in tasks:
         maxOrderId += 1
-        resp += [_DB.execute(sql.insertTask, [branchId, task['title'], task['description'], task['question'], task['answers'], maxOrderId])]
+        resp += [DB.execute(sql.insertTask, [branchId, task['title'], task['description'], task['question'], task['answers'], maxOrderId])]
     return jsonResponse({'tasks': resp})
 
 
@@ -162,7 +161,7 @@ def taskUpdate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
+    res, taskData = checkTaskAuthor(taskId, userId, DB, allowHelpers=True)
     if not res: return taskData
 
     if title is None: title = taskData['title']
@@ -176,7 +175,7 @@ def taskUpdate(userId):
     if isQrAnswer is None:
         isQrAnswer = taskData['isqranswer']
 
-    resp = _DB.execute(sql.updateTaskById, [orderId, title, description, question, answers, isQrAnswer, taskId])
+    resp = DB.execute(sql.updateTaskById, [orderId, title, description, question, answers, isQrAnswer, taskId])
     return jsonResponse(resp)
 
 
@@ -189,17 +188,17 @@ def taskDelete(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, taskData = checkTaskAuthor(taskId, userId, _DB, allowHelpers=True)
+    res, taskData = checkTaskAuthor(taskId, userId, DB, allowHelpers=True)
     if not res: return taskData
 
-    _DB.execute(sql.deleteTaskById, [taskId])
+    DB.execute(sql.deleteTaskById, [taskId])
 
     # Make orderids actual
     branchId = taskData['branchid']
-    resp = _DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # получаем все ветки
+    resp = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # получаем все ветки
     idx = 1
     for task in resp:
         if task['orderid'] != idx:
-            resp[idx-1] = _DB.execute(sql.updateTaskOrderidById, [idx, task['id']])
+            resp[idx-1] = DB.execute(sql.updateTaskOrderidById, [idx, task['id']])
         idx += 1
     return jsonResponse(resp)

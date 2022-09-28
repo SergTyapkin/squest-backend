@@ -1,33 +1,56 @@
+import random
 import uuid
 from datetime import datetime, timedelta
 
 from flask import Blueprint
+from flask_mail import Mail, Message
+from flask import current_app
 
+from connctions import DB
 from utils.access import *
 from constants import *
 from utils.utils import *
 
 app = Blueprint('user', __name__)
 
-config = read_config("config.json")
-_DB = Database(config)
-
 
 def new_session(resp):
-    tokenResp = _DB.execute(sql.selectSessionByUserId, [resp['id']])
-    if len(tokenResp) > 0:
+    tokenResp = DB.execute(sql.selectSessionByUserId, [resp['id']])
+    if tokenResp:
         token = tokenResp['token']
         expires = tokenResp['expires']
     else:
         token = str(uuid.uuid4())
         expires = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
-        _DB.execute(sql.insertSession, [resp['id'], token, expires])
+        DB.execute(sql.insertSession, [resp['id'], token, expires])
 
-    _DB.execute(sql.deleteExpiredSessions)
+    DB.execute(sql.deleteExpiredSessions)
 
     res = jsonResponse(resp)
     res.set_cookie("session_token", token, expires=expires, httponly=True, samesite="lax")
     return res
+
+
+def new_secret_code(userId, type):
+    DB.execute(sql.deleteExpiredSecretCodes)
+
+    secretCode = DB.execute(sql.selectSecretCodeByUserIdType, [userId, type])
+    if secretCode:
+        code = secretCode['code']
+        return code
+
+    # create new
+    code = ''
+    if type == "login":
+        random.seed()
+        code = str(random.randint(1, 999999)).zfill(6)
+    elif type == "password":
+        code = str(uuid.uuid4())
+
+    expires = (datetime.now() + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    DB.execute(sql.insertSecretCode, [userId, code, type, expires])
+
+    return code
 
 
 @app.route("/auth", methods=["POST"])
@@ -41,7 +64,7 @@ def userAuth():
 
     password = hash_sha256(password)
 
-    resp = _DB.execute(sql.selectUserByUsernamePassword, [username, password])
+    resp = DB.execute(sql.selectUserByUsernamePassword, [username, password])
     if len(resp) == 0:
         return jsonResponse("Неверные логин или пароль", HTTP_INVALID_AUTH_DATA)
 
@@ -55,7 +78,7 @@ def userSessionDelete():
         return jsonResponse("Вы не вошли в аккаунт", HTTP_NO_PERMISSIONS)
 
     try:
-        _DB.execute(sql.deleteSessionByToken, [token])
+        DB.execute(sql.deleteSessionByToken, [token])
     except:
         return jsonResponse("Сессия не удалена", HTTP_INTERNAL_ERROR)
 
@@ -74,7 +97,7 @@ def userGet(userData):
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     def addRating(obj, id):
-        res = _DB.execute(sql.selectRatings, [], manyResults=True)
+        res = DB.execute(sql.selectRatings, [], manyResults=True)
         positionDecrease = 0
         for idx, rating in enumerate(res):
             if rating['rating'] is None:
@@ -88,8 +111,8 @@ def userGet(userData):
         obj['position'] = len(res)
 
     def addQuestsInfo(obj, id):
-        createdQuests = _DB.execute(sql.selectCreatedQuestsByUserid, [id])
-        completedBranches = _DB.execute(sql.selectCompletedBranchesByUserid, [id])
+        createdQuests = DB.execute(sql.selectCreatedQuestsByUserid, [id])
+        completedBranches = DB.execute(sql.selectCompletedBranchesByUserid, [id])
         obj['createdquests'] = createdQuests.get('questscreated') or 0
         obj['completedbranches'] = completedBranches.get('completedbranches') or 0
 
@@ -102,7 +125,7 @@ def userGet(userData):
         return jsonResponse(userData)
 
     # get another user data
-    res = _DB.execute(sql.selectAnotherUserById, [userId])
+    res = DB.execute(sql.selectAnotherUserById, [userId])
     if not res:
         return jsonResponse("Пользователь не найден", HTTP_NOT_FOUND)
     addRating(res, userId)
@@ -125,7 +148,7 @@ def userCreate():
     password = hash_sha256(password)
 
     try:
-        resp = _DB.execute(sql.insertUser, [username, password, avatarUrl, email, name])
+        resp = DB.execute(sql.insertUser, [username, password, avatarUrl, email, name])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -150,7 +173,7 @@ def userUpdate(userData):
     if avatarUrl is None: avatarUrl = userData['avatarurl']
 
     try:
-        resp = _DB.execute(sql.updateUserById, [username, name, email, avatarUrl, userData['id']])
+        resp = DB.execute(sql.updateUserById, [username, name, email, avatarUrl, userData['id']])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -160,7 +183,7 @@ def userUpdate(userData):
 @app.route("", methods=["DELETE"])
 @login_required_return_id
 def userDelete(userId):
-    _DB.execute(sql.deleteUserById, [userId])
+    DB.execute(sql.deleteUserById, [userId])
     return jsonResponse("Пользователь удален")
 
 
@@ -180,8 +203,54 @@ def userUpdatePassword(userId):
     # if (userData['name'] != username) and (not userData['isadmin']):
     #     return jsonResponse("Нет прав", HTTP_NO_PERMISSIONS)
 
-    resp = _DB.execute(sql.updateUserPasswordByIdPassword, [newPassword, userId, oldPassword])
+    resp = DB.execute(sql.updateUserPasswordByIdPassword, [newPassword, userId, oldPassword])
     if len(resp) == 0:
         return jsonResponse("Старый пароль не такой", HTTP_INVALID_AUTH_DATA)
 
     return jsonResponse("Успешно обновлено")
+
+
+@app.route("/password/restore", methods=["POST"])
+def userRestorePasswordSendEmail():
+    try:
+        req = request.json
+        email = req['email']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    userData = DB.execute(sql.selectUserByEmail, [email])
+    if not userData:
+        return jsonResponse("На этот email не зарегистрирован ни один аккаунт", HTTP_NOT_FOUND)
+
+    secretCode = new_secret_code(userData['id'], "password")
+
+    with current_app.app_context():
+        mail = Mail()
+        msg = Message("Восстановление пароля на SQuest", recipients=[email])
+        msg.html = f"""<p>Для восстановления пароля, пожалуйста, перейдите по ссылке ниже: <br>
+                   <a href="https://sergtyapkin.herokuapp.com/squest/password/restore?code={secretCode}">Восстановить пароль</a> <br>
+                   <br>
+                   <hr>
+                   <small>Если вы не хотели восстанавливать пароль от своего аккаунта, проигнорируйте это письмо</small></p>"""
+        mail.send(msg)
+
+    return jsonResponse("Код выслан на почту " + email)
+
+
+@app.route("/password/restore", methods=["PUT"])
+def userRestorePasswordChangePassword():
+    try:
+        req = request.json
+        newPassword = req['newPassword']
+        code = req['code']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    newPassword = hash_sha256(newPassword)
+
+    userData = DB.execute(sql.updateUserPasswordBySecretcode, [newPassword, code])
+    if not userData:
+        return jsonResponse("Код восстановления не найден", HTTP_NOT_FOUND)
+
+    DB.execute(sql.deleteSecretCodeByUseridCode, [userData['id'], code])
+    return jsonResponse("Пароль изменен")
