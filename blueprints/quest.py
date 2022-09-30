@@ -3,7 +3,7 @@ import uuid
 
 from flask import Blueprint
 
-from connctions import DB
+from connections import DB
 from utils.access import *
 from constants import *
 from utils.questUtils import checkQuestAuthor
@@ -49,7 +49,7 @@ def questsGet(userId_logined):
             resp = DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
     # Нужно выдать вообще все квесты
     elif userId_logined is not None:
-        resp = DB.execute(sql.selectAvailableQuestsByUseridx7, [userId_logined] * 7, manyResults=True)  # просмотр всех опубликованных квестов
+        resp = DB.execute(sql.selectAvailableQuestsByUseridx2, [userId_logined] * 2, manyResults=True)  # просмотр всех опубликованных квестов
     else:
         resp = DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
 
@@ -75,8 +75,9 @@ def questsUidGet(userId):
 
 
 @app.route("", methods=["POST"])
-@login_required_return_id
-def questCreate(userId):
+@login_required
+@email_confirmation_required
+def questCreate(userData):
     try:
         req = request.json
         title = req['title']
@@ -86,7 +87,7 @@ def questCreate(userId):
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     uid = str(uuid.uuid4())
-    resp = DB.execute(sql.insertQuest, [uid, title, description, userId, isPublished])
+    resp = DB.execute(sql.insertQuest, [uid, title, description, userData['id'], isPublished])
 
     return jsonResponse(resp)
 
@@ -146,110 +147,6 @@ def questChoose(userId):
 
     resp = DB.execute(sql.updateUserChooseBranchByUserId, [questId, branchId, userId])
     return jsonResponse(resp)
-
-
-@app.route("/privacy")
-@login_required_return_id
-def privacyGet(userId):
-    try:
-        req = request.args
-        questId = req['questId']
-    except:
-        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-
-    res, questData = checkQuestAuthor(questId, userId, DB, allowHelpers=True)
-    if not res: return questData
-
-    resp = DB.execute(sql.selectPrivacyUserNamesByQuestId, [questId], manyResults=True)
-    return jsonResponse(resp)
-
-
-@app.route("/privacy", methods=["POST"])
-@login_required_return_id
-def privacyCreate(userId_logined):
-    try:
-        req = request.json
-        questId = req['questId']
-        userId = req.get('userId')
-        userName = req.get('name')
-        isInBlackList = req['isInBlackList']
-    except:
-        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-
-    if userId is None:
-        if userName is None:
-            return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = DB.execute(sql.selectUserByUsername, [userName])
-        if not resp:
-            return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
-        userId = resp['id']
-
-    res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
-    if not res: return questData
-
-    try:
-        resp = DB.execute(sql.insertPrivacy, [userId, questId, isInBlackList])
-    except:
-        return jsonResponse("Пользователя не существует или уже настроен", HTTP_DATA_CONFLICT)
-    return jsonResponse(resp)
-
-
-@app.route("/privacy", methods=["PUT"])
-@login_required_return_id
-def privacyUpdate(userId_logined):
-    try:
-        req = request.json
-        id = req['id']
-        questId = req['questId']
-        userId = req.get('userId')
-        userName = req.get('name')
-        isInBlackList = req.get('isInBlackList')
-    except:
-        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-
-    if userId is None:
-        if userName is None:
-            return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-        resp = DB.execute(sql.selectUserByUsername, [userName])
-        if not resp:
-            return jsonResponse("Пользователя не существует", HTTP_NOT_FOUND)
-        userId = resp['id']
-
-    res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
-    if not res: return questData
-
-    try:
-        resp = DB.execute(sql.updatePrivacyByIdQuestid, [userId, isInBlackList, id, questId])
-    except:
-        return jsonResponse("Пользователя не существует или уже настроен", HTTP_DATA_CONFLICT)
-    return jsonResponse(resp)
-
-
-@app.route("/privacy", methods=["DELETE"])
-@login_required_return_id
-def privacyDelete(userId_logined):
-    try:
-        req = request.json
-        id = req['id']
-
-        # isAll = req.get('all')
-        # questId = req.get('questId')
-        # userId = req.get('userId')
-    except:
-        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-
-    resp = DB.execute(sql.selectPrivacyById, [id])
-    questId = resp['questid']
-
-    res, questData = checkQuestAuthor(questId, userId_logined, DB, allowHelpers=True)
-    if not res: return questData
-
-    # if isAll == 'true':
-    #     DB.execute(sql.deletePrivacyByQuestid, [questId])
-    # else:
-    DB.execute(sql.deletePrivacyById, [id])
-
-    return jsonResponse("Запись доступа удалена")
 
 
 @app.route("/helpers")
@@ -386,8 +283,9 @@ def getUserProgressStats(userId):
 
 
 @app.route("/rating", methods=['POST'])
-@login_required_return_id
-def branchRatingVote(userId):
+@login_required
+@email_confirmation_required
+def branchRatingVote(userData):
     try:
         req = request.json
         branchId = req['branchId']
@@ -398,7 +296,7 @@ def branchRatingVote(userId):
     if rating < 1 or rating > 5:
         return jsonResponse("rating может быть только от 0 до 5", HTTP_INVALID_DATA)
 
-    resp = DB.execute(sql.updateProgressRatingByBranchidUserid, [rating, branchId, userId], manyResults=True)
+    resp = DB.execute(sql.updateProgressRatingByBranchidUserid, [rating, branchId, userData['id']], manyResults=True)
     if not resp:
         return jsonResponse("Нет прав на голосование за рейтинг квеста", HTTP_NO_PERMISSIONS)
     return jsonResponse(resp)

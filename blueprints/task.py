@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from connctions import DB
+from connections import DB
 from utils.access import *
 from utils.questUtils import *
 from utils.utils import *
@@ -101,8 +101,9 @@ def tasksCheckAnswer(userData):
 
 
 @app.route("", methods=["POST"])
-@login_required_return_id
-def taskCreate(userId):
+@login_required
+@email_confirmation_required
+def taskCreate(userData):
     try:
         req = request.json
         branchId = req['branchId']
@@ -113,7 +114,7 @@ def taskCreate(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
+    res, branchData = checkBranchAuthor(branchId, userData['id'], DB, allowHelpers=True)
     if not res: return branchData
 
     resp = DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
@@ -124,8 +125,9 @@ def taskCreate(userId):
 
 
 @app.route("/many", methods=["POST"])
-@login_required_return_id
-def taskCreateMany(userId):
+@login_required
+@email_confirmation_required
+def taskCreateMany(userData):
     try:
         req = request.json
         branchId = req['branchId']
@@ -133,7 +135,7 @@ def taskCreateMany(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
+    res, branchData = checkBranchAuthor(branchId, userData['id'], DB, allowHelpers=True)
     if not res: return branchData
 
     resp = DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])

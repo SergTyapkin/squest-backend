@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from connctions import DB
+from connections import DB
 from utils.access import *
 from utils.utils import *
 
@@ -8,7 +8,7 @@ app = Blueprint('ratings', __name__)
 
 
 @app.route("")
-def userAuth():
+def getRatings():
     resp = DB.execute(sql.selectRatings, manyResults=True)
     notNoneRatings = []
     noneRatings = []

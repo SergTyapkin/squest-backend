@@ -1,20 +1,22 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarurl, chosenquestid, chosenbranchid"
+_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarurl, avatarimageid, chosenquestid, chosenbranchid"
 # ----- INSERTS -----
 insertUser = \
-    "INSERT INTO users (username, password, avatarUrl, email, name, ChosenQuestId, ChosenBranchId) " \
+    "INSERT INTO users (username, password, avatarUrl, avatarImageId, email, name, ChosenQuestId, ChosenBranchId) " \
     "VALUES (%s, %s, %s, %s, %s, NULL, NULL) " \
     f"RETURNING {_userColumns}"
 
 insertSession = \
     "INSERT INTO sessions (userId, token, expires) " \
-    "VALUES (%s, %s, %s)"
+    "VALUES (%s, %s, NOW() + interval '1 hour' * %s) " \
+    "RETURNING *"
 
 insertSecretCode = \
     "INSERT INTO secretCodes (userId, code, type, expires) " \
-    "VALUES (%s, %s, %s, %s)"
+    "VALUES (%s, %s, %s, NOW() + interval '1 hour' * %s)" \
+    "RETURNING *"
 
 # ----- SELECTS -----
 selectUserByUsernamePassword = \
@@ -26,7 +28,7 @@ selectUserById = \
     "WHERE id = %s"
 
 selectAnotherUserById = \
-    f"SELECT users.id, name, username, joineddate, avatarurl, chosenbranchid, chosenquestid, quests.title as chosenQuest, branches.title as chosenBranch FROM users " \
+    f"SELECT users.id, name, username, joineddate, avatarurl, avatarImageId, chosenbranchid, chosenquestid, quests.title as chosenQuest, branches.title as chosenBranch FROM users " \
     "LEFT JOIN quests ON users.chosenquestid = quests.id " \
     "LEFT JOIN branches ON users.chosenbranchid = branches.id " \
     "WHERE users.id = %s"
@@ -72,25 +74,22 @@ selectSecretCodeByUserIdType = \
     "type = %s AND " \
     "expires > NOW()"
 
+selectUserByEmailCodeType = \
+    "SELECT users.id, name, username, joineddate, avatarurl, avatarImageId, chosenbranchid, chosenquestid FROM users " \
+    "JOIN secretCodes ON secretCodes.userId = users.id " \
+    "WHERE LOWER(email) = LOWER(%s) AND " \
+    "code = %s AND " \
+    "type = %s AND " \
+    "expires > NOW()"
+
 # ----- UPDATES -----
-updateUserConfirmationById = \
-    "UPDATE users SET " \
-    "isConfirmed = %s " \
-    "WHERE id = %s " \
-    "RETURNING id"
-
-updateUserAvatarById = \
-    "UPDATE users SET " \
-    "avatarUrl = %s " \
-    "WHERE id = %s " \
-    "RETURNING id"
-
 updateUserById = \
     "UPDATE users SET " \
     "username = %s, " \
     "name = %s, " \
     "email = %s, " \
-    "avatarUrl = %s " \
+    "avatarUrl = %s, " \
+    "avatarImageId = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 
@@ -100,14 +99,24 @@ updateUserPasswordByIdPassword = \
     "WHERE id = %s AND password = %s " \
     "RETURNING id"
 
-updateUserPasswordBySecretcode = \
+updateUserPasswordBySecretcodeType = \
     "UPDATE users " \
     "SET password = %s " \
     "FROM secretCodes " \
     "WHERE secretCodes.userId = users.id AND " \
-    "secretCodes.code = %s " \
-    "RETURNING *"
+    "secretCodes.code = %s AND " \
+    "secretCodes.type = %s " \
+    "RETURNING users.*"
 
+
+updateUserConfirmationBySecretcodeType = \
+    "UPDATE users " \
+    "SET isConfirmed = True " \
+    "FROM secretCodes " \
+    "WHERE secretCodes.userId = users.id AND " \
+    "secretCodes.code = %s AND " \
+    "secretCodes.type = %s " \
+    "RETURNING users.*"
 
 # ----- DELETES -----
 deleteExpiredSessions = \
@@ -145,11 +154,6 @@ insertProgress = \
     "INSERT INTO progresses (userId, branchId) " \
     "VALUES (%s, %s) " \
     "RETURNING * "
-
-insertPrivacy = \
-    "INSERT INTO questsPrivacy (userId, questId, isInBlackList) " \
-    "VALUES (%s, %s, %s) " \
-    "RETURNING *"
 
 insertHelper = \
     "INSERT INTO questsHelpers (userId, questId) " \
@@ -218,15 +222,6 @@ selectQuestsByAuthorx2 = \
     "   ) " \
     ")"
 
-selectPrivacyUserNamesByQuestId = \
-    "SELECT users.username as name, questsprivacy.id as id, isInBlackList FROM questsPrivacy " \
-    "JOIN users ON userId = users.id " \
-    "WHERE questId = %s"
-
-selectPrivacyById = \
-    "SELECT * FROM questsPrivacy " \
-    "WHERE id = %s"
-
 selectHelpersUserNamesByQuestId = \
     "SELECT users.username as name, questsHelpers.id as id FROM questsHelpers " \
     "JOIN users ON userId = users.id " \
@@ -239,40 +234,12 @@ selectHelperById = \
 # выбрать все квесты
 # 1. где ты автор
 # 2. где ты в соавторах
-# + Все кроме этих, но кроме тех, у которых:
-# # 1. ты в черном списке
-# # 2. есть белый список кроме тебя
-# # Если ты тоже в белом списке - надо добавить этот квест
-
-selectAvailableQuestsByUseridx7 = \
+selectAvailableQuestsByUseridx2 = \
     "SELECT quests.id, author, title, description, ispublished, islinkactive, previewUrl, users.username as authorName, True as canEdit " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
     "(author = %s) OR " \
     "(quests.id IN " \
-    "   (SELECT questid FROM questshelpers" \
-    "       JOIN users on questshelpers.userid = users.id " \
-    "       WHERE userid = %s " \
-    "   ) " \
-    ") " \
-    "" \
-    "UNION " \
-    "" \
-    "SELECT quests.id, author, title, description, ispublished, islinkactive, previewUrl, users.username as authorName, False as canEdit " \
-    "FROM quests JOIN users ON quests.author = users.id " \
-    "WHERE " \
-    "(ispublished AND " \
-    "   (quests.id NOT IN ( " \
-    "       SELECT questid FROM questsprivacy " \
-    "       WHERE (userid = %s AND isinblacklist = true) " \
-    "           OR (userid != %s AND isinblacklist = false) " \
-    "   )) OR NOT ( " \
-    "       SELECT isinblacklist FROM questsprivacy " \
-    "       WHERE userid = %s AND questid = quests.id " \
-    "   ) " \
-    ") AND " \
-    "(author != %s) AND " \
-    "(quests.id NOT IN " \
     "   (SELECT questid FROM questshelpers" \
     "       JOIN users on questshelpers.userid = users.id " \
     "       WHERE userid = %s " \
@@ -283,13 +250,7 @@ selectAvailableQuestsByUseridx7 = \
 selectAvailableQuests = \
     "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
     "FROM quests JOIN users ON quests.author = users.id " \
-    "WHERE " \
-    "(ispublished AND " \
-    "   (quests.id NOT IN ( " \
-    "       SELECT questid FROM questsprivacy " \
-    "       WHERE isinblacklist = false " \
-    "   ))" \
-    ")"
+    "WHERE ispublished = True"
 
 selectPublishedQuestsByUserid = \
     "SELECT id, author, title, description, ispublished FROM quests " \
@@ -379,7 +340,7 @@ selectProgressStatsByUseridBranchid = \
     "SELECT ratingvote as rating, finished - started as time FROM progresses " \
     "WHERE userid = %s AND branchid = %s"
 
-# строки 2 и 3 нужны для удаления рейтингов юзеров и хелперов в своих же квестах
+# строка с WHERE нужна для удаления рейтингов авторов и хелперов в своих же квестах
 selectRatings = \
     "SELECT sum(progresses.maxprogress) as rating, users.id, users.username " \
     "FROM users " \
@@ -387,7 +348,8 @@ selectRatings = \
     "LEFT JOIN branches ON branchid = branches.id " \
     "LEFT JOIN quests ON branches.questid = quests.id " \
     "LEFT JOIN questshelpers on quests.id = questshelpers.questid " \
-    "WHERE ((quests.author IS NULL OR quests.author != users.id) AND (questshelpers.userid IS NULL OR questshelpers.userid != users.id)) " \
+    "WHERE ((quests.author IS NULL OR quests.author != users.id) AND (questshelpers.userid IS NULL OR questshelpers.userid != users.id)) AND " \
+    "users.isConfirmed = True " \
     "GROUP BY users.id " \
     "ORDER BY rating DESC"
 
@@ -450,13 +412,6 @@ updateBranchTitleById = \
     "WHERE id = %s " \
     "RETURNING *"
 
-updatePrivacyByIdQuestid = \
-    "UPDATE questsPrivacy SET " \
-    "userId = %s, " \
-    "isInBlackList = %s " \
-    "WHERE id = %s AND questId = %s " \
-    "RETURNING *"
-
 updateHelperByIdQuestid = \
     "UPDATE questsHelpers SET " \
     "userId = %s " \
@@ -512,14 +467,6 @@ deleteBranchById = \
 deleteTaskById = \
     "DELETE FROM tasks " \
     "WHERE id = %s"
-
-deletePrivacyById = \
-    "DELETE FROM questsPrivacy " \
-    "WHERE id = %s"
-
-deletePrivacyByQuestidUserid = \
-    "DELETE FROM questsPrivacy " \
-    "WHERE questId = %s AND userid = %s"
 
 deleteHelperById = \
     "DELETE FROM questsHelpers " \

@@ -6,10 +6,13 @@ from flask import Blueprint
 from flask_mail import Mail, Message
 from flask import current_app
 
-from connctions import DB
+from connections import DB
 from utils.access import *
 from constants import *
 from utils.utils import *
+
+import email_templates as emails
+
 
 app = Blueprint('user', __name__)
 
@@ -21,8 +24,9 @@ def new_session(resp):
         expires = tokenResp['expires']
     else:
         token = str(uuid.uuid4())
-        expires = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
-        DB.execute(sql.insertSession, [resp['id'], token, expires])
+        hoursAlive = 24 * 7  # 7 days
+        session = DB.execute(sql.insertSession, [resp['id'], token, hoursAlive])
+        expires = session['expires']
 
     DB.execute(sql.deleteExpiredSessions)
 
@@ -31,7 +35,7 @@ def new_session(resp):
     return res
 
 
-def new_secret_code(userId, type):
+def new_secret_code(userId, type, hours=1):
     DB.execute(sql.deleteExpiredSecretCodes)
 
     secretCode = DB.execute(sql.selectSecretCodeByUserIdType, [userId, type])
@@ -40,15 +44,13 @@ def new_secret_code(userId, type):
         return code
 
     # create new
-    code = ''
     if type == "login":
         random.seed()
         code = str(random.randint(1, 999999)).zfill(6)
-    elif type == "password":
+    else:
         code = str(uuid.uuid4())
 
-    expires = (datetime.now() + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-    DB.execute(sql.insertSecretCode, [userId, code, type, expires])
+    DB.execute(sql.insertSecretCode, [userId, code, type, hours])
 
     return code
 
@@ -65,7 +67,7 @@ def userAuth():
     password = hash_sha256(password)
 
     resp = DB.execute(sql.selectUserByUsernamePassword, [username, password])
-    if len(resp) == 0:
+    if not resp:
         return jsonResponse("Неверные логин или пароль", HTTP_INVALID_AUTH_DATA)
 
     return new_session(resp)
@@ -140,7 +142,6 @@ def userCreate():
         username = req['username']
         name = req['name']
         password = req['password']
-        avatarUrl = req.get('avatarUrl')
         email = req.get('email')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
@@ -148,7 +149,7 @@ def userCreate():
     password = hash_sha256(password)
 
     try:
-        resp = DB.execute(sql.insertUser, [username, password, avatarUrl, email, name])
+        resp = DB.execute(sql.insertUser, [username, password, None, email, name])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -163,17 +164,21 @@ def userUpdate(userData):
         username = req.get('username')
         name = req.get('name')
         email = req.get('email')
-        avatarUrl = req.get('avatarUrl')
+        avatarImageId = req.get('avatarImageId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     if name is None: name = userData['name']
     if username is None: username = userData['username']
     if email is None: email = userData['email']
-    if avatarUrl is None: avatarUrl = userData['avatarurl']
+    if avatarImageId is None: avatarImageId = userData['avatarimageid']
+
+    avatarUrl = None
+    if avatarImageId is not None:
+        avatarUrl = f'/image/{avatarImageId}'
 
     try:
-        resp = DB.execute(sql.updateUserById, [username, name, email, avatarUrl, userData['id']])
+        resp = DB.execute(sql.updateUserById, [username, name, email, avatarUrl, avatarImageId, userData['id']])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -227,14 +232,10 @@ def userRestorePasswordSendEmail():
     with current_app.app_context():
         mail = Mail()
         msg = Message("Восстановление пароля на SQuest", recipients=[email])
-        msg.html = f"""<p>Для восстановления пароля, пожалуйста, перейдите по ссылке ниже: <br>
-                   <a href="https://sergtyapkin.herokuapp.com/squest/password/restore?code={secretCode}">Восстановить пароль</a> <br>
-                   <br>
-                   <hr>
-                   <small>Если вы не хотели восстанавливать пароль от своего аккаунта, проигнорируйте это письмо</small></p>"""
+        msg.html = emails.restorePassword(userData['avatarurl'], userData['name'], secretCode)
         mail.send(msg)
 
-    return jsonResponse("Код выслан на почту " + email)
+    return jsonResponse("Ссылка для восстановления выслана на почту " + email)
 
 
 @app.route("/password/restore", methods=["PUT"])
@@ -248,9 +249,76 @@ def userRestorePasswordChangePassword():
 
     newPassword = hash_sha256(newPassword)
 
-    userData = DB.execute(sql.updateUserPasswordBySecretcode, [newPassword, code])
+    userData = DB.execute(sql.updateUserPasswordBySecretcodeType, [newPassword, code, "password"])
     if not userData:
         return jsonResponse("Код восстановления не найден", HTTP_NOT_FOUND)
 
     DB.execute(sql.deleteSecretCodeByUseridCode, [userData['id'], code])
     return jsonResponse("Пароль изменен")
+
+
+@app.route("/auth/code", methods=["POST"])
+def userAuthByEmailCode():
+    try:
+        req = request.json
+        email = req['email']
+        code = req.get('code')
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    if code is None:
+        userData = DB.execute(sql.selectUserByEmail, [email])
+        if not userData:
+            return jsonResponse("На этот email не зарегистрирован ни один аккаунт", HTTP_NOT_FOUND)
+        if not userData['isconfirmed']:
+            return jsonResponse("Этот email не подтвержден в соответствующем аккаунте", HTTP_NO_PERMISSIONS)
+
+        secretCode = new_secret_code(userData['id'], "login")
+
+        with current_app.app_context():
+            mail = Mail()
+            msg = Message("Вход на SQuest", recipients=[email])
+            msg.html = emails.loginByCode(userData['avatarurl'], userData['name'], secretCode)
+            mail.send(msg)
+
+        return jsonResponse("Код выслан на почту " + email)
+
+    resp = DB.execute(sql.selectUserByEmailCodeType, [email, code, "login"])
+    if not resp:
+        return jsonResponse("Неверные email или одноразовый код", HTTP_INVALID_AUTH_DATA)
+
+    return new_session(resp)
+
+
+@app.route("/email/confirm", methods=["POST"])
+@login_required
+def userConfirmEmailSendMessage(userData):
+    email = userData['email']
+
+    userData = DB.execute(sql.selectUserByEmail, [email])
+    if not userData:
+        return jsonResponse("На этот email не зарегистрирован ни один аккаунт", HTTP_NOT_FOUND)
+
+    secretCode = new_secret_code(userData['id'], "email", hours=24)
+
+    with current_app.app_context():
+        mail = Mail()
+        msg = Message("Подтверждение регистрации на SQuest", recipients=[email])
+        msg.html = emails.confirmEmail(userData['avatarurl'], userData['name'], secretCode)
+        mail.send(msg)
+    return jsonResponse("Ссылка для подтверждения email выслана на почту " + email)
+
+
+@app.route("/email/confirm", methods=["PUT"])
+def userConfirmEmail():
+    try:
+        req = request.json
+        code = req['code']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    resp = DB.execute(sql.updateUserConfirmationBySecretcodeType, [code, "email"])
+    if not resp:
+        return jsonResponse("Неверный одноразовый код", HTTP_INVALID_AUTH_DATA)
+
+    return jsonResponse("Адрес email подтвержден")

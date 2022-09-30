@@ -4,7 +4,7 @@ from functools import wraps
 from flask import request
 
 import database.SQL_requests as sql
-from connctions import DB
+from connections import DB
 from constants import *
 from utils.utils import *
 
@@ -39,6 +39,16 @@ def login_required(f):
         userData = get_logined_user()
         if not userData:
             return jsonResponse("Не авторизован", HTTP_INVALID_AUTH_DATA)
+        return f(*args, userData, **kwargs)
+
+    return wrapper
+
+
+def email_confirmation_required(f):
+    @wraps(f)
+    def wrapper(*args, userData, **kwargs):
+        if not userData['isconfirmed']:
+            return jsonResponse("EMail не подтвержден", HTTP_NO_PERMISSIONS)
         return f(*args, userData, **kwargs)
 
     return wrapper

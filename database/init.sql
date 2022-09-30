@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatarUrl        TEXT DEFAULT NULL
     -- chosenQuestId    SERIAL -- will adds by ALTER in end
     -- chosenBranchId   SERIAL -- will adds by ALTER in end
+    -- avatarImageId    SERIAL -- will adds by ALTER in end
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -31,14 +32,6 @@ CREATE TABLE IF NOT EXISTS quests (
     isModerated    BOOL NOT NULL DEFAULT false,
     isLinkActive   BOOL NOT NULL DEFAULT false,
     previewUrl     TEXT DEFAULT NULL
-);
-
-CREATE TABLE IF NOT EXISTS questsPrivacy (
-    id           SERIAL PRIMARY KEY,
-    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    questId      SERIAL NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
-    isInBlackList  BOOL NOT NULL DEFAULT false,
-    UNIQUE (userId, questId)
 );
 
 CREATE TABLE IF NOT EXISTS questsHelpers (
@@ -117,6 +110,11 @@ BEGIN
             ChosenBranchId SERIAL REFERENCES branches(id) ON DELETE SET NULL;
         ALTER TABLE users ALTER COLUMN ChosenBranchId
             DROP NOT NULL;
+
+        ALTER TABLE users ADD COLUMN
+            avatarImageId SERIAL REFERENCES images(id) ON DELETE SET NULL;
+        ALTER TABLE users ALTER COLUMN avatarImageId
+            DROP NOT NULL;
     END IF;
 END;
 $$;
@@ -157,3 +155,22 @@ CREATE TRIGGER before_update
     BEFORE UPDATE ON progresses
     FOR EACH ROW
         EXECUTE PROCEDURE set_actual_max_progress();
+
+
+--------
+CREATE OR REPLACE FUNCTION set_email_not_confirmed() RETURNS TRIGGER AS
+$$
+BEGIN
+    IF NEW.email != OLD.email THEN
+        NEW.isConfirmed = false;
+    END IF;
+
+    RETURN NEW;
+END
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS before_update ON users;
+CREATE TRIGGER before_update
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+        EXECUTE PROCEDURE set_email_not_confirmed();
