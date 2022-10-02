@@ -352,13 +352,13 @@ selectPLayersProgressesByQuestid = \
     "AND progress != 0 " \
     "ORDER BY branchTitle, progress DESC"
 
-selectFinishedQuestPLayers = \
+selectFinishedQuestPLayersByQuestid = \
     "SELECT users.id, users.username, STRING_AGG(branches.title, ', ') as branches, SUM(progresses.finished - progresses.started) as time " \
     "FROM progresses " \
     "JOIN users ON progresses.userid = users.id " \
     "JOIN branches ON progresses.branchid = branches.id " \
     "JOIN quests ON branches.questid = quests.id " \
-    "WHERE quests.id = 6 " \
+    "WHERE quests.id = %s " \
     "AND progresses.isfinished = True " \
     "GROUP BY users.id " \
     "ORDER BY time"
