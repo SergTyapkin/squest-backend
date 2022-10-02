@@ -39,7 +39,6 @@ if __name__ == '__main__':
     #     "university": "МГТУ",
     #     "educationGroup": "РК6-62Б",
     #     "groupRole": "student",
-    #     # "avatarUrl": "",
     #     "email": "Tyapki2002@mail.ru",
     # })
     #

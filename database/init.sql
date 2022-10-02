@@ -7,8 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     name             TEXT DEFAULT NULL,
     isAdmin          BOOLEAN DEFAULT FALSE,
     joinedDate       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    isConfirmed      BOOLEAN DEFAULT FALSE,
-    avatarUrl        TEXT DEFAULT NULL
+    isConfirmed      BOOLEAN DEFAULT FALSE
     -- chosenQuestId    SERIAL -- will adds by ALTER in end
     -- chosenBranchId   SERIAL -- will adds by ALTER in end
     -- avatarImageId    SERIAL -- will adds by ALTER in end

@@ -148,7 +148,7 @@ def userCreate():
     password = hash_sha256(password)
 
     try:
-        resp = DB.execute(sql.insertUser, [username, password, None, email, name])
+        resp = DB.execute(sql.insertUser, [username, password, email, name])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -173,12 +173,8 @@ def userUpdate(userData):
     if email is None: email = userData['email']
     if avatarImageId is None: avatarImageId = userData['avatarimageid']
 
-    avatarUrl = None
-    if avatarImageId is not None:
-        avatarUrl = f'/image/{avatarImageId}'
-
     try:
-        resp = DB.execute(sql.updateUserById, [username, name, email, avatarUrl, avatarImageId, userData['id']])
+        resp = DB.execute(sql.updateUserById, [username, name, email, avatarImageId, userData['id']])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 
@@ -233,7 +229,7 @@ def userRestorePasswordSendEmail():
     with current_app.app_context():
         mail = Mail()
         msg = Message("Восстановление пароля на SQuest", recipients=[email])
-        msg.html = emails.restorePassword(userData['avatarurl'], userData['name'], secretCode)
+        msg.html = emails.restorePassword('/image/' + userData['avatarimageid'], userData['name'], secretCode)
         mail.send(msg)
 
     return jsonResponse("Ссылка для восстановления выслана на почту " + email)
@@ -280,7 +276,7 @@ def userAuthByEmailCode():
         with current_app.app_context():
             mail = Mail()
             msg = Message("Вход на SQuest", recipients=[email])
-            msg.html = emails.loginByCode(userData['avatarurl'], userData['name'], secretCode)
+            msg.html = emails.loginByCode('/image/' + userData['avatarimageid'], userData['name'], secretCode)
             mail.send(msg)
 
         return jsonResponse("Код выслан на почту " + email)
@@ -306,7 +302,7 @@ def userConfirmEmailSendMessage(userData):
     with current_app.app_context():
         mail = Mail()
         msg = Message("Подтверждение регистрации на SQuest", recipients=[email])
-        msg.html = emails.confirmEmail(userData['avatarurl'], userData['name'], secretCode)
+        msg.html = emails.confirmEmail(f"/image/{userData['avatarimageid']}", userData['name'], secretCode)
         mail.send(msg)
     return jsonResponse("Ссылка для подтверждения email выслана на почту " + email)
 

@@ -1,11 +1,11 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarurl, avatarimageid, chosenquestid, chosenbranchid"
+_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarimageid, chosenquestid, chosenbranchid"
 # ----- INSERTS -----
 insertUser = \
-    "INSERT INTO users (username, password, avatarUrl, avatarImageId, email, name, ChosenQuestId, ChosenBranchId) " \
-    "VALUES (%s, %s, %s, %s, %s, NULL, NULL) " \
+    "INSERT INTO users (username, password, avatarImageId, email, name, ChosenQuestId, ChosenBranchId) " \
+    "VALUES (%s, %s, NULL, %s, %s, NULL, NULL) " \
     f"RETURNING {_userColumns}"
 
 insertSession = \
@@ -28,7 +28,7 @@ selectUserById = \
     "WHERE id = %s"
 
 selectAnotherUserById = \
-    f"SELECT users.id, name, username, joineddate, avatarurl, avatarImageId, chosenbranchid, chosenquestid, quests.title as chosenQuest, branches.title as chosenBranch FROM users " \
+    f"SELECT users.id, name, username, joineddate, avatarImageId, chosenbranchid, chosenquestid, quests.title as chosenQuest, branches.title as chosenBranch FROM users " \
     "LEFT JOIN quests ON users.chosenquestid = quests.id " \
     "LEFT JOIN branches ON users.chosenbranchid = branches.id " \
     "WHERE users.id = %s"
@@ -75,7 +75,7 @@ selectSecretCodeByUserIdType = \
     "expires > NOW()"
 
 selectUserByEmailCodeType = \
-    "SELECT users.id, name, username, joineddate, avatarurl, avatarImageId, chosenbranchid, chosenquestid FROM users " \
+    "SELECT users.id, name, username, joineddate, avatarImageId, chosenbranchid, chosenquestid FROM users " \
     "JOIN secretCodes ON secretCodes.userId = users.id " \
     "WHERE email = %s AND " \
     "code = %s AND " \
@@ -88,7 +88,6 @@ updateUserById = \
     "username = %s, " \
     "name = %s, " \
     "email = %s, " \
-    "avatarUrl = %s, " \
     "avatarImageId = %s " \
     "WHERE id = %s " \
     "RETURNING *"
