@@ -258,7 +258,7 @@ def getFinishedUsers():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = DB.execute(sql.selectFinishedQuestPLayers, [questId], manyResults=True)
+    resp = DB.execute(sql.selectFinishedQuestPLayersByQuestid, [questId], manyResults=True)
     for user in resp:
         user['time'] = user['time'].total_seconds()
     return jsonResponse({"players": resp})
