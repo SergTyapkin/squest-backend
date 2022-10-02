@@ -170,7 +170,7 @@ insertTask = \
     "RETURNING *"
 
 # ----- SELECTS -----
-selectPublishedQuestsByAuthor = \
+selectPublishedQuestsByAuthorUserid = \
     "SELECT id, author, title, description, isPublished, previewUrl FROM quests " \
     "WHERE author = %s AND ( " \
     "   isPublished = true OR " \

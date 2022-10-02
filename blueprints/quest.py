@@ -46,7 +46,7 @@ def questsGet(userId_logined):
         if str(userId_logined) == userId:
             resp = DB.execute(sql.selectEditableQuestsByUseridx2, [userId_logined] * 2, manyResults=True)  # просмотр всех своих квестов
         else:
-            resp = DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
+            resp = DB.execute(sql.selectPublishedQuestsByAuthorUserid, [userId, userId_logined], manyResults=True)  # просмотр квестов определенного автора
     # Нужно выдать вообще все квесты
     elif userId_logined is not None:
         allQuests = DB.execute(sql.selectPublishedQuests, manyResults=True)  # берем все опубликованные
