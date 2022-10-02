@@ -51,7 +51,7 @@ selectUserByUsername = \
 
 selectUserByEmail = \
     f"SELECT {_userColumns} FROM users " \
-    "WHERE LOWER(email) = LOWER(%s)"
+    "WHERE email = %s"
 
 selectUserIdBySessionToken = \
     "SELECT userId FROM sessions " \
@@ -77,7 +77,7 @@ selectSecretCodeByUserIdType = \
 selectUserByEmailCodeType = \
     "SELECT users.id, name, username, joineddate, avatarurl, avatarImageId, chosenbranchid, chosenquestid FROM users " \
     "JOIN secretCodes ON secretCodes.userId = users.id " \
-    "WHERE LOWER(email) = LOWER(%s) AND " \
+    "WHERE email = %s AND " \
     "code = %s AND " \
     "type = %s AND " \
     "expires > NOW()"
@@ -210,18 +210,6 @@ selectQuestByIdHelperid = \
     "LEFT JOIN questshelpers on quests.id = questshelpers.questid " \
     "WHERE quests.id = %s AND questshelpers.userid = %s"
 
-
-selectQuestsByAuthorx2 = \
-    "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, True as canEdit, users.username as authorName " \
-    "FROM quests LEFT JOIN users ON quests.author = users.id " \
-    "WHERE author = %s OR " \
-    "(quests.id IN " \
-    "   (SELECT questid FROM questshelpers" \
-    "       JOIN users on questshelpers.userid = users.id " \
-    "       WHERE userid = %s " \
-    "   ) " \
-    ")"
-
 selectHelpersUserNamesByQuestId = \
     "SELECT users.username as name, questsHelpers.id as id FROM questsHelpers " \
     "JOIN users ON userId = users.id " \
@@ -234,7 +222,7 @@ selectHelperById = \
 # выбрать все квесты
 # 1. где ты автор
 # 2. где ты в соавторах
-selectAvailableQuestsByUseridx2 = \
+selectEditableQuestsByUseridx2 = \
     "SELECT quests.id, author, title, description, ispublished, islinkactive, previewUrl, users.username as authorName, True as canEdit " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE " \
@@ -246,8 +234,7 @@ selectAvailableQuestsByUseridx2 = \
     "   ) " \
     ")"
 
-
-selectAvailableQuests = \
+selectPublishedQuests = \
     "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
     "FROM quests JOIN users ON quests.author = users.id " \
     "WHERE ispublished = True"
@@ -355,18 +342,29 @@ selectRatings = \
 
 
 selectPLayersProgressesByQuestid = \
-    "SELECT users.id, users.username, progresses.maxprogress as progress FROM progresses " \
+    "SELECT users.id, users.username, progresses.maxprogress as progress, branches.title as branchTitle, NOW() - progresses.started as time " \
+    "FROM progresses " \
     "JOIN users ON progresses.userid = users.id " \
     "JOIN branches ON progresses.branchid = branches.id " \
     "JOIN quests ON branches.questid = quests.id " \
-    "WHERE quests.id = %s"
+    "WHERE quests.id = %s " \
+    "AND progresses.isfinished = False " \
+    "AND progress != 0 " \
+    "ORDER BY branchTitle, progress DESC"
 
 selectFinishedQuestPLayers = \
-    selectPLayersProgressesByQuestid + \
-    " AND progresses.isfinished = True"
+    "SELECT users.id, users.username, STRING_AGG(branches.title, ', ') as branches, SUM(progresses.finished - progresses.started) as time " \
+    "FROM progresses " \
+    "JOIN users ON progresses.userid = users.id " \
+    "JOIN branches ON progresses.branchid = branches.id " \
+    "JOIN quests ON branches.questid = quests.id " \
+    "WHERE quests.id = 6 " \
+    "AND progresses.isfinished = True " \
+    "GROUP BY users.id " \
+    "ORDER BY time"
 
 selectQuestStatisticsByQuestid = \
-    "SELECT quests.id, avg(ratingvote) as rating, avg(finished - started) as time, count(progresses.id) as played " \
+    "SELECT quests.id, avg(ratingvote) as rating, avg(finished - started) as time, count(*) as played " \
     "FROM progresses " \
     "JOIN branches ON progresses.branchid = branches.id " \
     "JOIN quests ON branches.questid = quests.id " \

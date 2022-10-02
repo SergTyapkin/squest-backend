@@ -44,14 +44,21 @@ def questsGet(userId_logined):
     # Нужно выдать все квесты юзера
     elif userId is not None:
         if str(userId_logined) == userId:
-            resp = DB.execute(sql.selectQuestsByAuthorx2, [userId_logined] * 2, manyResults=True)  # просмотр всех своих квестов
+            resp = DB.execute(sql.selectEditableQuestsByUseridx2, [userId_logined] * 2, manyResults=True)  # просмотр всех своих квестов
         else:
             resp = DB.execute(sql.selectPublishedQuestsByAuthor, [userId], manyResults=True)  # просмотр квестов определенного автора
     # Нужно выдать вообще все квесты
     elif userId_logined is not None:
-        resp = DB.execute(sql.selectAvailableQuestsByUseridx2, [userId_logined] * 2, manyResults=True)  # просмотр всех опубликованных квестов
+        allQuests = DB.execute(sql.selectPublishedQuests, manyResults=True)  # берем все опубликованные
+        myQuests = DB.execute(sql.selectEditableQuestsByUseridx2, [userId_logined] * 2, manyResults=True)  # берем все, доступные для редактирования
+        myQuestsIds = list(map(lambda quest: quest['id'], myQuests))
+        for quest in allQuests:  # т.к. они могут пересекаться, добавляем к доступым для редактирования, остальные неопубликованные
+            if quest['id'] not in myQuestsIds:
+                quest['canedit'] = False  # следим за полями canedit. Всё что мы делаем ради них и нужно
+                myQuests.append(quest)
+        resp = myQuests
     else:
-        resp = DB.execute(sql.selectAvailableQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
+        resp = DB.execute(sql.selectPublishedQuests, manyResults=True)  # просмотр всех опубликованных квестов для незалогиненного пользователя
 
     return jsonResponse({'quests': resp})
 
@@ -75,8 +82,7 @@ def questsUidGet(userId):
 
 
 @app.route("", methods=["POST"])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def questCreate(userData):
     try:
         req = request.json
@@ -247,24 +253,28 @@ def helperDelete(userId_logined):
 @app.route("/users/finished")
 def getFinishedUsers():
     try:
-        req = request.json
+        req = request.args
         questId = req['questId']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     resp = DB.execute(sql.selectFinishedQuestPLayers, [questId], manyResults=True)
+    for user in resp:
+        user['time'] = user['time'].total_seconds()
     return jsonResponse({"players": resp})
 
 
 @app.route("/users/progresses")
 def getUsersProgresses():
     try:
-        req = request.json
+        req = request.args
         questId = req['questId']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
     resp = DB.execute(sql.selectPLayersProgressesByQuestid, [questId], manyResults=True)
+    for user in resp:
+        user['time'] = user['time'].total_seconds()
     return jsonResponse({"players": resp})
 
 
@@ -283,8 +293,7 @@ def getUserProgressStats(userId):
 
 
 @app.route("/rating", methods=['POST'])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def branchRatingVote(userData):
     try:
         req = request.json

@@ -44,9 +44,12 @@ def login_required(f):
     return wrapper
 
 
-def email_confirmation_required(f):
+def login_and_email_confirmation_required(f):
     @wraps(f)
-    def wrapper(*args, userData, **kwargs):
+    def wrapper(*args, **kwargs):
+        userData = get_logined_user()
+        if not userData:
+            return jsonResponse("Не авторизован", HTTP_INVALID_AUTH_DATA)
         if not userData['isconfirmed']:
             return jsonResponse("EMail не подтвержден", HTTP_NO_PERMISSIONS)
         return f(*args, userData, **kwargs)

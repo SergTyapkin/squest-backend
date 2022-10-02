@@ -86,23 +86,19 @@ def confirmEmail(avatarUrl, fullName, code):
     <br>
     <br>
     <hr>
-    <div style="padding: 0 20px;font-size: 0;text-align: left;color: #ffffff">
-        <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: normal;font-size: 14px;">Без подтверждения:</div>
-        <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: normal;font-size: 14px;">С подтверждением:</div>
-        <div style="color: #c9c9c9">
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Просмотр квестов</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Ты в рейтинге</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Прохождение заданий</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Создание квестов</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Изменение квестов</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Создание команд</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"></div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Оценка квестов</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"></div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Загрузка картинок</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"></div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Вход по коду</div>
-            <div style="box-sizing: border-box;display: inline-block;width: 50%;white-space: nowrap;overflow:hidden;padding: 0 0 0 20px;font-weight: bold;font-size: 16px;"></div>
+    <div style="padding: 0 20px;font-size: 0;text-align: left;color: #c9c9c9">
+        <div style="display: inline-block;width: 50%;min-width: 200px;vertical-align: top">
+            <div style="color: #ff9b9b;box-sizing: border-box;white-space: nowrap;overflow:hidden;padding: 0;font-weight: normal;letter-spacing: 1px;font-size: 14px;">Без подтверждения:</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Просмотр квестов</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Прохождение заданий</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;">&nbsp;</div>
+        </div>
+        <div style="display: inline-block;width: 50%;min-width: 200px">
+            <div style="color: #afff9c;box-sizing: border-box;white-space: nowrap;overflow:hidden;padding: 0;font-weight: normal;letter-spacing: 1px;font-size: 14px;">С подтверждением:</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Ты в рейтинге</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Создание квестов</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Создание команд</div>
+            <div style="box-sizing: border-box;white-space: nowrap;padding: 0;font-weight: bold;font-size: 16px;"><img width="16px" height="16px" alt="+" title="+" style="margin-right: 5px" src="https://sergtyapkin.herokuapp.com/squest/static/ok.png"/>Оценка квестов</div>
         </div>
     </div>
     <hr>

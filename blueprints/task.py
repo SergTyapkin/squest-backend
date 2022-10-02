@@ -101,8 +101,7 @@ def tasksCheckAnswer(userData):
 
 
 @app.route("", methods=["POST"])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def taskCreate(userData):
     try:
         req = request.json
@@ -125,8 +124,7 @@ def taskCreate(userData):
 
 
 @app.route("/many", methods=["POST"])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def taskCreateMany(userData):
     try:
         req = request.json

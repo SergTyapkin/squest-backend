@@ -13,7 +13,6 @@ from utils.utils import *
 
 import email_templates as emails
 
-
 app = Blueprint('user', __name__)
 
 
@@ -118,7 +117,6 @@ def userGet(userData):
         obj['createdquests'] = createdQuests.get('questscreated') or 0
         obj['completedbranches'] = completedBranches.get('completedbranches') or 0
 
-
     if userId is None:  # return self user data
         if userData is None:
             return jsonResponse("Не авторизован", HTTP_INVALID_AUTH_DATA)
@@ -145,6 +143,7 @@ def userCreate():
         email = req.get('email')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+    if email: email = email.strip().lower()
 
     password = hash_sha256(password)
 
@@ -167,6 +166,7 @@ def userUpdate(userData):
         avatarImageId = req.get('avatarImageId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+    if email: email = email.strip().lower()
 
     if name is None: name = userData['name']
     if username is None: username = userData['username']
@@ -222,6 +222,7 @@ def userRestorePasswordSendEmail():
         email = req['email']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+    email = email.strip().lower()
 
     userData = DB.execute(sql.selectUserByEmail, [email])
     if not userData:
@@ -265,6 +266,7 @@ def userAuthByEmailCode():
         code = req.get('code')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+    email = email.strip().lower()
 
     if code is None:
         userData = DB.execute(sql.selectUserByEmail, [email])

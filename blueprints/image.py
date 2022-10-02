@@ -36,8 +36,7 @@ def imageGet(imageId, imageExt=None):
 _leftLen = len('data:image/')
 _rightLen = len(';base64')
 @app.route("", methods=["POST"])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def imageUpload(userData):
     try:
         req = request.json

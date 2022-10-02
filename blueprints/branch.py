@@ -45,8 +45,7 @@ def branchesGet(userId):
 
 
 @app.route("", methods=["POST"])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def branchCreate(userData):
     try:
         req = request.json
@@ -67,8 +66,7 @@ def branchCreate(userData):
 
 
 @app.route("/many", methods=["POST"])
-@login_required
-@email_confirmation_required
+@login_and_email_confirmation_required
 def branchCreateMany(userData):
     try:
         req = request.json
