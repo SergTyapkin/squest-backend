@@ -229,7 +229,7 @@ def userRestorePasswordSendEmail():
     with current_app.app_context():
         mail = Mail()
         msg = Message("Восстановление пароля на SQuest", recipients=[email])
-        msg.html = emails.restorePassword('/image/' + userData['avatarimageid'], userData['name'], secretCode)
+        msg.html = emails.restorePassword(f"/image/{userData['avatarimageid']}", userData['name'], secretCode)
         mail.send(msg)
 
     return jsonResponse("Ссылка для восстановления выслана на почту " + email)
@@ -276,7 +276,7 @@ def userAuthByEmailCode():
         with current_app.app_context():
             mail = Mail()
             msg = Message("Вход на SQuest", recipients=[email])
-            msg.html = emails.loginByCode('/image/' + userData['avatarimageid'], userData['name'], secretCode)
+            msg.html = emails.loginByCode(f"/image/{userData['avatarimageid']}", userData['name'], secretCode)
             mail.send(msg)
 
         return jsonResponse("Код выслан на почту " + email)
