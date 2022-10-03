@@ -34,16 +34,16 @@ selectAnotherUserById = \
     "WHERE users.id = %s"
 
 selectCreatedQuestsByUserid = \
-    f"SELECT count(quests.id) as questsCreated FROM users " \
-    "LEFT JOIN quests ON users.id = quests.author " \
-    "WHERE users.id = %s " \
-    "GROUP BY users.id"
+    f"SELECT quests.id, quests.title FROM users " \
+    "JOIN quests ON users.id = quests.author " \
+    "WHERE users.id = %s"
 
 selectCompletedBranchesByUserid = \
-    f"SELECT count(progresses.id) as completedBranches FROM users " \
+    f"SELECT branches.id as branchid, branches.title as branchtitle, quests.id as questid, quests.title as questtitle FROM users " \
     "LEFT JOIN progresses ON progresses.userid = users.id " \
-    "WHERE users.id = %s AND progresses.isfinished = True " \
-    "GROUP BY users.id"
+    "LEFT JOIN branches ON progresses.branchid = branches.id " \
+    "LEFT JOIN quests ON branches.questid = quests.id " \
+    "WHERE users.id = %s AND progresses.isfinished = True"
 
 selectUserByUsername = \
     f"SELECT {_userColumns} FROM users " \

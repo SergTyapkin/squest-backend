@@ -112,10 +112,10 @@ def userGet(userData):
         obj['position'] = len(res)
 
     def addQuestsInfo(obj, id):
-        createdQuests = DB.execute(sql.selectCreatedQuestsByUserid, [id])
-        completedBranches = DB.execute(sql.selectCompletedBranchesByUserid, [id])
-        obj['createdquests'] = createdQuests.get('questscreated') or 0
-        obj['completedbranches'] = completedBranches.get('completedbranches') or 0
+        createdQuests = DB.execute(sql.selectCreatedQuestsByUserid, [id], manyResults=True)
+        completedBranches = DB.execute(sql.selectCompletedBranchesByUserid, [id], manyResults=True)
+        obj['createdquests'] = createdQuests
+        obj['completedbranches'] = completedBranches
 
     if userId is None:  # return self user data
         if userData is None:
@@ -320,3 +320,5 @@ def userConfirmEmail():
         return jsonResponse("Неверный одноразовый код", HTTP_INVALID_AUTH_DATA)
 
     return jsonResponse("Адрес email подтвержден")
+
+
