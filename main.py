@@ -28,8 +28,8 @@ app.register_blueprint(rating_app,   url_prefix='/ratings')
 app.config['MAIL_SERVER'] = _config['SMTP_mail_server_host']
 app.config['MAIL_PORT'] = _config['SMTP_mail_server_port']
 app.config['MAIL_USE_TLS'] = _config['SMTP_mail_server_use_tls']
-app.config['MAIL_USERNAME'] = _config['mail_username']
-app.config['MAIL_DEFAULT_SENDER'] = _config['mail_username']
+app.config['MAIL_USERNAME'] = _config['mail_address']
+app.config['MAIL_DEFAULT_SENDER'] = _config['mail_sender_name']
 app.config['MAIL_PASSWORD'] = _config['mail_password']
 
 mail = Mail(app)

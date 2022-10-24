@@ -107,5 +107,5 @@ def confirmEmail(avatarUrl, fullName, code):
     <a href="https://sergtyapkin.herokuapp.com/squest/email/confirm?code={code}" target="_blank" style="margin-top:10px;line-height: 1;box-sizing: border-box;display: inline-block;max-width: 100%;padding: 10px 15px;border-radius: 5px;background: linear-gradient(20deg,rgba(45,36,13,0.4) 0%,rgba(90,56,25,0.7) 50%,rgba(55,43,16,0.4) 100%) 50% 50% no-repeat;border: 1px #b08946 solid;box-shadow: inset 0 0 0 transparent, 5px 5px 10px rgb(0 0 0 / 33%);font-weight: bold;color: #fff !important;" rel=" noopener noreferrer"><span style="display: inline-block;width: 14px;height: 18px;vertical-align: middle;"></span> Подтвердить регистрацию</a>
     <br>
     <br>
-    Ссылка для подтверждения действительна всего день       
+    <span>Ссылка для подтверждения действительна всего день</span>        
     """)

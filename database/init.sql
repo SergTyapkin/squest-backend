@@ -104,16 +104,22 @@ BEGIN
             ChosenQuestId SERIAL REFERENCES quests(id) ON DELETE SET NULL;
         ALTER TABLE users ALTER COLUMN ChosenQuestId
             DROP NOT NULL;
+        ALTER TABLE users ALTER COLUMN ChosenQuestId
+            SET DEFAULT NULL;
 
         ALTER TABLE users ADD COLUMN
             ChosenBranchId SERIAL REFERENCES branches(id) ON DELETE SET NULL;
         ALTER TABLE users ALTER COLUMN ChosenBranchId
             DROP NOT NULL;
+        ALTER TABLE users ALTER COLUMN ChosenBranchId
+            SET DEFAULT NULL;
 
         ALTER TABLE users ADD COLUMN
             avatarImageId SERIAL REFERENCES images(id) ON DELETE SET NULL;
         ALTER TABLE users ALTER COLUMN avatarImageId
             DROP NOT NULL;
+        ALTER TABLE users ALTER COLUMN avatarImageId
+            SET DEFAULT NULL;
     END IF;
 END;
 $$;

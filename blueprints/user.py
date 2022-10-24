@@ -1,10 +1,7 @@
 import random
 import uuid
-from datetime import datetime, timedelta
 
 from flask import Blueprint
-from flask_mail import Mail, Message
-from flask import current_app
 
 from connections import DB
 from utils.access import *
@@ -226,11 +223,9 @@ def userRestorePasswordSendEmail():
 
     secretCode = new_secret_code(userData['id'], "password")
 
-    with current_app.app_context():
-        mail = Mail()
-        msg = Message("Восстановление пароля на SQuest", recipients=[email])
-        msg.html = emails.restorePassword(f"/image/{userData['avatarimageid']}", userData['name'], secretCode)
-        mail.send(msg)
+    send_email(email,
+               "Восстановление пароля на SQuest",
+               emails.restorePassword(f"/image/{userData['avatarimageid']}", userData['name'], secretCode))
 
     return jsonResponse("Ссылка для восстановления выслана на почту " + email)
 
@@ -273,11 +268,9 @@ def userAuthByEmailCode():
 
         secretCode = new_secret_code(userData['id'], "login")
 
-        with current_app.app_context():
-            mail = Mail()
-            msg = Message("Вход на SQuest", recipients=[email])
-            msg.html = emails.loginByCode(f"/image/{userData['avatarimageid']}", userData['name'], secretCode)
-            mail.send(msg)
+        send_email(email,
+                   "Вход на SQuest",
+                   emails.loginByCode(f"/image/{userData['avatarimageid']}", userData['name'], secretCode))
 
         return jsonResponse("Код выслан на почту " + email)
 
@@ -299,11 +292,10 @@ def userConfirmEmailSendMessage(userData):
 
     secretCode = new_secret_code(userData['id'], "email", hours=24)
 
-    with current_app.app_context():
-        mail = Mail()
-        msg = Message("Подтверждение регистрации на SQuest", recipients=[email])
-        msg.html = emails.confirmEmail(f"/image/{userData['avatarimageid']}", userData['name'], secretCode)
-        mail.send(msg)
+    send_email(email,
+               "Подтверждение регистрации на SQuest",
+               emails.confirmEmail(f"/image/{userData['avatarimageid']}", userData['name'], secretCode))
+
     return jsonResponse("Ссылка для подтверждения email выслана на почту " + email)
 
 
