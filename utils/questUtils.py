@@ -31,13 +31,13 @@ def checkQuestAuthor(questId, userId, DB, allowHelpers=False) -> (bool, dict or 
 
 def checkBranchAuthor(branchId, userId, DB, allowHelpers=False) -> (bool, dict or str):
     result = _checkAuthor(sql.selectQuestByBranchId, [branchId], 'author', userId, DB)
-    if not result and allowHelpers:
+    if not result[0] and allowHelpers:
         return _checkHelper(sql.selectQuestByBranchidHelperId, [branchId, userId], DB)
     return result
 
 
 def checkTaskAuthor(taskId, userId, DB, allowHelpers=False) -> (bool, dict or str):
     result = _checkAuthor(sql.selectQuestByTaskId, [taskId], 'author', userId, DB)
-    if not result and allowHelpers:
+    if not result[0] and allowHelpers:
         return _checkHelper(sql.selectQuestByTaskidHelperId, [taskId, userId], DB)
     return result
