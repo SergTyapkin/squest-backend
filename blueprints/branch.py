@@ -151,3 +151,28 @@ def progressReset(userId):
     resp = DB.execute(sql.updateProgressByUseridBranchid, [0, userId, branchId])
     return jsonResponse(resp)
 
+
+# Можно переключиться на следующее или предыдущее задание квеста,
+# только если ты автор или соавтор квеста
+@app.route("/progress/set", methods=["PUT"])
+@login_required
+def setProgress(userData):
+    try:
+        req = request.json
+        branchId = req['branchId']
+        targetProgress = req['progress']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    # проверяем права доступа
+    res, branchData = checkBranchAuthor(branchId, userData['id'], DB, allowHelpers=True)
+    if not res: return branchData
+
+    # получаем длину ветки
+    branchInfo = DB.execute(sql.selectBranchLengthById, [branchId])
+
+    if (targetProgress < 0) or (targetProgress >= branchInfo['length']):
+        return jsonResponse("Указанное смещение выходит за пределы количества заданий ветки", HTTP_INVALID_DATA)
+
+    DB.execute(sql.updateProgressByUseridBranchid, [targetProgress, userData['id'], branchId])
+    return jsonResponse(f"Прогресс в ветке изменён на {targetProgress}")

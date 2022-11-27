@@ -23,6 +23,10 @@ selectUserByUsernamePassword = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE username = %s AND password = %s"
 
+selectUserByEmailPassword = \
+    f"SELECT {_userColumns} FROM users " \
+    "WHERE email = %s AND password = %s"
+
 selectUserById = \
     f"SELECT {_userColumns} FROM users " \
     "WHERE id = %s"

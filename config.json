@@ -1,8 +1,9 @@
 {
-    "db_host": "ec2-52-214-125-106.eu-west-1.compute.amazonaws.com",
+    "db_host": "localhost",
     "db_port": 5432,
-    "db_user": "yoffybvokztlqn",
-    "db_database": "d24p7gda8btqjf",
+    "db_user": "postgres",
+    "db_database": "squest-site",
+    "db_password": "root",
 
     "max_image_size": 512,
 

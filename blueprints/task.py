@@ -56,8 +56,8 @@ def tasksGetLast(userData):
     isAuthor = checkQuestAuthor(questResp['id'], userData['id'], DB, allowHelpers=True)[0]
     branchResp = DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
     # Можно получить только последний таск в выбранной ветке и квесте только если
-    # ветка и квест опубликованы или юзер - автор
-    if not isAuthor and (not questResp['ispublished'] or not branchResp['ispublished']):
+    # ветка и квест опубликованы или доступны по ссылке или юзер - автор
+    if not isAuthor and ((not questResp['ispublished'] and not questResp['islinkactive']) or not branchResp['ispublished']):
         return jsonResponse("Выбранный квест или ветка не опубликованы, а вы не автор", HTTP_NO_PERMISSIONS)
 
     progress = getOrCreateUserProgress(userData)
@@ -71,6 +71,8 @@ def tasksGetLast(userData):
     if branchResp['length'] == 0:
         return jsonResponse("В ветке нет заданий", 400)
     resp['length'] = max(branchResp['length'] - 1, 0)
+    # Добавим к ответу, является ли пользователь автором или соавтором квеста с этим заданием
+    resp['canedit'] = isAuthor
 
     # Определим кол-во заданий, и уберем поле question, если задание - последнее
     maxOrderid = DB.execute(sql.selectTaskMaxOrderidByBranchid, [userData['chosenbranchid']])

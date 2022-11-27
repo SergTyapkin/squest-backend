@@ -59,12 +59,14 @@ def userAuth():
         password = req['password']
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
-
+    username = username.strip()
     password = hash_sha256(password)
 
     resp = DB.execute(sql.selectUserByUsernamePassword, [username, password])
     if not resp:
-        return jsonResponse("Неверные логин или пароль", HTTP_INVALID_AUTH_DATA)
+        resp = DB.execute(sql.selectUserByEmailPassword, [username.lower(), password])
+        if not resp:
+            return jsonResponse("Неверные логин или пароль", HTTP_INVALID_AUTH_DATA)
 
     return new_session(resp)
 
@@ -141,6 +143,7 @@ def userCreate():
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
     if email: email = email.strip().lower()
+    username = username.strip()
 
     password = hash_sha256(password)
 
