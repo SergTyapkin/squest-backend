@@ -4,7 +4,6 @@ def _default_template(avatarUrl, fullName, htmlContent):
         avatarDiv = f'''<img src="https://sergtyapkin.herokuapp.com/squest/api{avatarUrl}" height="80px" width="80px" alt="avatar" title="avatar" style="margin: 20px auto;border-radius: 40px"/>
             <br>
         '''
-    print(avatarUrl, fullName, avatarDiv)
 
     fullNameDiv = ''
     if fullName:
