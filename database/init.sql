@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS images (
     id             SERIAL PRIMARY KEY,
     author         SERIAL REFERENCES users(id) ON DELETE SET NULL,
     type           TEXT NOT NULL,
-    base64         TEXT NOT NULL
+    bytes          BYTEA
 );
 
 

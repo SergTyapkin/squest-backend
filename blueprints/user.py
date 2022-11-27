@@ -271,9 +271,11 @@ def userAuthByEmailCode():
 
         secretCode = new_secret_code(userData['id'], "login")
 
+        avatarImageId = userData['avatarimageid']
         send_email(email,
                    "Вход на SQuest",
-                   emails.loginByCode(f"/image/{userData['avatarimageid']}", userData['name'], secretCode))
+                   emails.loginByCode(f"/image/{avatarImageId}" if avatarImageId is not None else None,
+                                      userData['name'], secretCode))
 
         return jsonResponse("Код выслан на почту " + email)
 
