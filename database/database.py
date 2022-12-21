@@ -1,15 +1,23 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from urllib.parse import urlparse
 
 
 class Database:
-    def __new__(cls, user, password, host, port, dbname):
+    def __new__(cls, user=None, password=None, host=None, port=5432, dbname=None, url=None):
         if not hasattr(cls, 'instance'):
             cls.user = user
             cls.password = password
             cls.host = host
             cls.port = port
             cls.dbname = dbname
+            if url is not None:                
+                result = urlparse("postgresql://postgres:postgres@localhost/postgres")
+                cls.user = result.username
+                cls.password = result.password
+                cls.dbname = result.path[1:]
+                cls.host = result.hostname
+                cls.port = result.port
             cls.init(cls)
             cls.instance = super(Database, cls).__new__(cls)
         return cls.instance
