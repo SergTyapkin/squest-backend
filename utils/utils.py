@@ -26,7 +26,10 @@ def read_config(filepath: str) -> dict:
         config = json.load(file)
         file.close()
 
-        if "db_password" not in config:
+        if "db_host" not in config:
+            if "db_url" not in config:
+                config["dp_url"] = os.environ["DATABASE_URL"]
+        elif "db_password" not in config:
             config["db_password"] = os.environ["DATABASE_PASSWORD"]
 
         if "mail_password" not in config:
