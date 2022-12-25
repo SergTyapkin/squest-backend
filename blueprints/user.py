@@ -137,7 +137,7 @@ def userCreate():
     try:
         req = request.json
         username = req['username']
-        name = req['name']
+        name = req.get('name')
         password = req['password']
         email = req.get('email')
     except:

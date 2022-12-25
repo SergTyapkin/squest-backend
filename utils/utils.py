@@ -35,7 +35,6 @@ def read_config(filepath: str) -> dict:
         if "mail_password" not in config:
             config["mail_password"] = os.environ["MAIL_PASSWORD"]
 
-        print("Config readed: \n", config)
         return config
     except Exception as e:
         print("Can't open and serialize json:", filepath)

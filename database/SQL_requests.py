@@ -1,7 +1,7 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarimageid, chosenquestid, chosenbranchid"
+_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarimageid, chosenquestid, chosenbranchid, chosenmode"
 # ----- INSERTS -----
 insertUser = \
     "INSERT INTO users (username, password, avatarImageId, email, name, ChosenQuestId, ChosenBranchId) " \
@@ -79,7 +79,7 @@ selectSecretCodeByUserIdType = \
     "expires > NOW()"
 
 selectUserByEmailCodeType = \
-    "SELECT users.id, name, username, joineddate, avatarImageId, chosenbranchid, chosenquestid FROM users " \
+    "SELECT users.id, name, username, joineddate, avatarImageId, chosenbranchid, chosenquestid, chosenmode FROM users " \
     "JOIN secretCodes ON secretCodes.userId = users.id " \
     "WHERE email = %s AND " \
     "code = %s AND " \
@@ -379,7 +379,8 @@ selectQuestStatisticsByQuestid = \
 updateUserChooseBranchByUserId = \
     "UPDATE users SET " \
     "chosenQuestId = %s, " \
-    "chosenBranchId = %s " \
+    "chosenBranchId = %s, " \
+    "chosenMode = %s " \
     "WHERE id = %s"
 
 updateQuestById = \

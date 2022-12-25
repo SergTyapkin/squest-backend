@@ -148,10 +148,11 @@ def questChoose(userId):
         req = request.json
         questId = req['questId']
         branchId = req['branchId']
+        mode = req.get('mode') or 0
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = DB.execute(sql.updateUserChooseBranchByUserId, [questId, branchId, userId])
+    resp = DB.execute(sql.updateUserChooseBranchByUserId, [questId, branchId, mode, userId])
     return jsonResponse(resp)
 
 
