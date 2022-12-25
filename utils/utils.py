@@ -28,14 +28,14 @@ def read_config(filepath: str) -> dict:
 
         if "db_host" not in config:
             if "db_url" not in config:
-                config["dp_url"] = os.environ["DATABASE_URL"]
+                config["db_url"] = os.environ["DATABASE_URL"]
         elif "db_password" not in config:
             config["db_password"] = os.environ["DATABASE_PASSWORD"]
 
         if "mail_password" not in config:
             config["mail_password"] = os.environ["MAIL_PASSWORD"]
 
-        print("Config readed:\n", config)
+        print("Config readed: \n", config)
         return config
     except Exception as e:
         print("Can't open and serialize json:", filepath)
