@@ -11,8 +11,9 @@ class Database:
             cls.host = host
             cls.port = port
             cls.dbname = dbname
-            if url is not None:                
-                result = urlparse("postgresql://postgres:postgres@localhost/postgres")
+            print()
+            if url is not None:
+                result = urlparse(url)
                 cls.user = result.username
                 cls.password = result.password
                 cls.dbname = result.path[1:]
