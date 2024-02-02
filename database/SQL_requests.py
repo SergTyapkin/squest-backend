@@ -164,8 +164,8 @@ insertHelper = \
     "RETURNING *"
 
 insertBranch = \
-    "INSERT INTO branches (questId, title, description, orderid) " \
-    "VALUES (%s, %s, %s, %s) " \
+    "INSERT INTO branches (questId, title, description, orderid, ispublished) " \
+    "VALUES (%s, %s, %s, %s, %s) " \
     "RETURNING *"
 
 insertTask = \

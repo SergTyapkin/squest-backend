@@ -61,7 +61,7 @@ def branchCreate(userData):
     resp = DB.execute(sql.selectBranchMaxOrderidByQuestid, [questId])
     maxOrderId = resp['maxorderid'] or 0
 
-    resp = DB.execute(sql.insertBranch, [questId, title, description, maxOrderId + 1])
+    resp = DB.execute(sql.insertBranch, [questId, title, description, maxOrderId + 1, False])
     return jsonResponse(resp)
 
 
@@ -84,7 +84,7 @@ def branchCreateMany(userData):
     resp = []
     for branch in branches:
         maxOrderId += 1
-        resp += [DB.execute(sql.insertBranch, [questId, branch['title'], branch['description'], maxOrderId])]
+        resp += [DB.execute(sql.insertBranch, [questId, branch['title'], branch['description'], maxOrderId, False])]
     return jsonResponse({'branches': resp})
 
 

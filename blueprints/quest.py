@@ -94,7 +94,7 @@ def questCreate(userData):
 
     uid = str(uuid.uuid4())
     resp = DB.execute(sql.insertQuest, [uid, title, description, userData['id'], isPublished])
-    defaultBranch = DB.execute(sql.insertBranch, [resp['id'], DEFAULT_BRANCH_NAME, None, 1])
+    defaultBranch = DB.execute(sql.insertBranch, [resp['id'], DEFAULT_BRANCH_NAME, None, 1, True])
     if not defaultBranch:
         print("Не удалось создать дефолтную ветку квеста!")
     return jsonResponse(resp)
