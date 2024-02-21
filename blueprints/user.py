@@ -140,6 +140,7 @@ def userCreate():
         name = req.get('name')
         password = req['password']
         email = req.get('email')
+        temporaryToQuestId = req.get('temporaryToQuestId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
     if email: email = email.strip().lower()
@@ -148,7 +149,7 @@ def userCreate():
     password = hash_sha256(password)
 
     try:
-        resp = DB.execute(sql.insertUser, [username, password, email, name])
+        resp = DB.execute(sql.insertUser, [username, password, email, name, temporaryToQuestId])
     except:
         return jsonResponse("Имя пользователя или email заняты", HTTP_DATA_CONFLICT)
 

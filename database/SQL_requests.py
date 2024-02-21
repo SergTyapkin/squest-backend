@@ -1,11 +1,11 @@
 # -----------------------
 # -- Default user part --
 # -----------------------
-_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarimageid, chosenquestid, chosenbranchid, chosenmode"
+_userColumns = "users.id, name, username, email, isadmin, joineddate, isconfirmed, avatarimageid, chosenquestid, chosenbranchid, chosenmode, temporarytoquestid"
 # ----- INSERTS -----
 insertUser = \
-    "INSERT INTO users (username, password, avatarImageId, email, name, ChosenQuestId, ChosenBranchId) " \
-    "VALUES (%s, %s, NULL, %s, %s, NULL, NULL) " \
+    "INSERT INTO users (username, password, avatarImageId, email, name, chosenQuestId, chosenBranchId, temporaryToQuestId) " \
+    "VALUES (%s, %s, NULL, %s, %s, NULL, NULL, %s) " \
     f"RETURNING {_userColumns}"
 
 insertSession = \
@@ -79,7 +79,7 @@ selectSecretCodeByUserIdType = \
     "expires > NOW()"
 
 selectUserByEmailCodeType = \
-    "SELECT users.id, name, username, joineddate, avatarImageId, chosenbranchid, chosenquestid, chosenmode FROM users " \
+    "SELECT users.id, name, username, joineddate, avatarImageId, chosenbranchid, chosenquestid, chosenmode, temporarytoquestid FROM users " \
     "JOIN secretCodes ON secretCodes.userId = users.id " \
     "WHERE email = %s AND " \
     "code = %s AND " \
@@ -187,7 +187,7 @@ selectPublishedQuestsByAuthorUserid = \
     ")"
 
 selectQuestById = \
-    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
+    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, previewUrl, backgroundImageUrl, customCSS, users.username as authorName " \
     "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "WHERE quests.id = %s"
 
@@ -316,11 +316,16 @@ selectTaskByBranchidNumber = \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
 
-selectTaskAnswersByBranchidNumber = \
+selectTaskAnswersByBranchidCount = \
     "SELECT answers FROM tasks " \
     "WHERE branchid = %s " \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
+
+selectTaskAnswersByBranchidTaskid = \
+    "SELECT answers FROM tasks " \
+    "WHERE branchid = %s " \
+    "AND id = %s"
 
 selectProgressByUseridBranchid = \
     "SELECT * FROM progresses " \
@@ -375,7 +380,7 @@ selectQuestStatisticsByQuestid = \
     "AND progresses.isfinished = true " \
     "GROUP BY quests.id"
 
-# ----- S -----
+# ----- UPDATES -----
 updateUserChooseBranchByUserId = \
     "UPDATE users SET " \
     "chosenQuestId = %s, " \
@@ -389,7 +394,9 @@ updateQuestById = \
     "description = %s, " \
     "isPublished = %s, " \
     "isLinkActive = %s, " \
-    "previewUrl = %s " \
+    "previewUrl = %s, " \
+    "backgroundImageUrl = %s, " \
+    "customCSS = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 
@@ -398,7 +405,8 @@ updateBranchById = \
     "orderid = %s, " \
     "title = %s, " \
     "description = %s, " \
-    "isPublished = %s " \
+    "isPublished = %s, " \
+    "isTasksNotSorted = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 

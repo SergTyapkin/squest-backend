@@ -98,6 +98,7 @@ def branchUpdate(userId):
         title = req.get('title')
         description = req.get('description')
         isPublished = req.get('isPublished')
+        isTasksNotSorted = req.get('isTasksNotSorted')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -108,8 +109,9 @@ def branchUpdate(userId):
     if description is None: description = branchData['description']
     if isPublished is None: isPublished = branchData['ispublished']
     if orderId is None: orderId = branchData['orderid']
+    if isTasksNotSorted is None: isTasksNotSorted = branchData['istasksnotsorted']
 
-    resp = DB.execute(sql.updateBranchById, [orderId, title, description, isPublished, branchId])
+    resp = DB.execute(sql.updateBranchById, [orderId, title, description, isPublished, isTasksNotSorted, branchId])
     return jsonResponse(resp)
 
 

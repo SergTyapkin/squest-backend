@@ -27,11 +27,16 @@ def tasksGet(userId):
         return jsonResponse(taskData)
     # Нужно выдать все таски ветки
     elif branchId is not None:
-        # Можно смотреть только если юзер залогинен и юзер - автор ветки
-        if userId is None or not checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]:
-            return jsonResponse("Вы не являетесь автором ветки", HTTP_NO_PERMISSIONS)
-        resp = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
-        return jsonResponse({'tasks': resp})
+        # Можно смотреть только если юзер юзер - автор ветки
+        if checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]:
+            resp = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
+            return jsonResponse({'tasks': resp})
+        # Иначе можно смотреть только если юзер играет в эту ветку и в ней несортированые задания. Тогда надо выдать все ещё не пройденные задания
+        resp = DB.execute(sql.selectBranchById, [branchId])
+        if resp['istasksnotsorted'] is True:
+            resp = DB.execute(sql.selectUnfinishedTasksByBranchidUserid, [branchId, userId], manyResults=True)  # можно смотреть не пройденные таски ветки
+            return jsonResponse({'tasks': resp})
+        return jsonResponse("В выбранной ветке нельзя смотреть список всех заданий, и вы не автор квеста", HTTP_NO_PERMISSIONS)
     # Не пришло ни одного id
     return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -63,9 +68,12 @@ def tasksGetLast(userData):
     progress = getOrCreateUserProgress(userData)
 
     resp = DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
-    # Добавим к ответу названия квеста и ветки
+    # Добавим к ответу названия квеста и ветки, а так же настройки ветки
     resp['questtitle'] = questResp['title']
+    resp['customcss'] = questResp['customcss']
+    resp['backgroundImageUrl'] = questResp['backgroundimageurl']
     resp['branchtitle'] = branchResp['title']
+    resp['istasksnotsorted'] = branchResp['istasksnotsorted']
     # Добавим к ответу прогресс и общую длину ветки
     resp['progress'] = progress
     if branchResp['length'] == 0:
@@ -88,12 +96,17 @@ def tasksCheckAnswer(userData):
     try:
         req = request.json
         userAnswer = req['answer'].lower()
+        taskId = req.get('taskId')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    progress = getOrCreateUserProgress(userData)
+    if taskId is None:
+        progress = getOrCreateUserProgress(userData)
+        task = DB.execute(sql.selectTaskAnswersByBranchidCount, [userData['chosenbranchid'], progress])
+    else:
+        task = DB.execute(sql.selectTaskAnswersByBranchidTaskid, [userData['chosenbranchid'], taskId])
+    print(userData['chosenbranchid'], taskId, task)
 
-    task = DB.execute(sql.selectTaskAnswersByBranchidNumber, [userData['chosenbranchid'], progress])
     for answer in task['answers']:
         if answer == userAnswer or answer == '*':  # если настроен ответ '*' - принимается любой ответ
             resp = DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])

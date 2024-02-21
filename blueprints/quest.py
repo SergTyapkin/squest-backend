@@ -111,6 +111,8 @@ def questUpdate(userId):
         isPublished = req.get('isPublished')
         isLinkActive = req.get('isLinkActive')
         previewUrl = req.get('previewUrl')
+        backgroundImageUrl = req.get('backgroundImageUrl')
+        customCSS = req.get('customCSS')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
@@ -122,8 +124,10 @@ def questUpdate(userId):
     if isPublished is None: isPublished = questData['ispublished']
     if isLinkActive is None: isLinkActive = questData['islinkactive']
     if previewUrl is None: previewUrl = questData['previewurl']
+    if backgroundImageUrl is None: backgroundImageUrl = questData['backgroundimageurl']
+    if customCSS is None: customCSS = questData['customcss']
 
-    resp = DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, previewUrl, questId])
+    resp = DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, previewUrl, backgroundImageUrl, customCSS, questId])
     return jsonResponse(resp)
 
 

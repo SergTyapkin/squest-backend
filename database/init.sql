@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     -- chosenBranchId   SERIAL -- will adds by ALTER in end
     chosenMode       INT NOT NULL DEFAULT 0
     -- avatarImageId    SERIAL -- will adds by ALTER in end
+    -- temporaryToQuestId SERIAL -- will adds by ALTER in end
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -31,7 +32,9 @@ CREATE TABLE IF NOT EXISTS quests (
     isPublished    BOOL NOT NULL DEFAULT false,
     isModerated    BOOL NOT NULL DEFAULT false,
     isLinkActive   BOOL NOT NULL DEFAULT false,
-    previewUrl     TEXT DEFAULT NULL
+    previewUrl     TEXT DEFAULT NULL,
+    backgroundImageUrl TEXT DEFAULT NULL,
+    customCSS      TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS questsHelpers (
@@ -47,7 +50,8 @@ CREATE TABLE IF NOT EXISTS branches (
     questId        SERIAL NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
     title          TEXT DEFAULT NULL,
     description    TEXT DEFAULT NULL,
-    isPublished    BOOL NOT NULL DEFAULT false
+    isPublished    BOOL NOT NULL DEFAULT false,
+    isTasksNotSorted    BOOL NOT NULL DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS progresses (
@@ -120,6 +124,13 @@ BEGIN
         ALTER TABLE users ALTER COLUMN avatarImageId
             DROP NOT NULL;
         ALTER TABLE users ALTER COLUMN avatarImageId
+            SET DEFAULT NULL;
+
+        ALTER TABLE users ADD COLUMN
+            temporaryToQuestId SERIAL REFERENCES quests(id) ON DELETE CASCADE;
+        ALTER TABLE users ALTER COLUMN temporaryToQuestId
+            DROP NOT NULL;
+        ALTER TABLE users ALTER COLUMN temporaryToQuestId
             SET DEFAULT NULL;
     END IF;
 END;
