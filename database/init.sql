@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS quests (
     id             SERIAL PRIMARY KEY,
     uid            TEXT UNIQUE NOT NULL,
-    title          TEXT DEFAULT NULL,
-    description    TEXT DEFAULT NULL,
+    title          TEXT NOT NULL DEFAULT '',
+    description    TEXT NOT NULL DEFAULT '',
     createdDate    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     author         SERIAL NOT NULL REFERENCES users(id) ON DELETE SET NULL,
     isPublished    BOOL NOT NULL DEFAULT false,
@@ -48,22 +48,23 @@ CREATE TABLE IF NOT EXISTS branches (
     id             SERIAL PRIMARY KEY,
     orderId        SERIAL NOT NULL,
     questId        SERIAL NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
-    title          TEXT DEFAULT NULL,
-    description    TEXT DEFAULT NULL,
+    title          TEXT NOT NULL DEFAULT '',
+    description    TEXT NOT NULL DEFAULT '',
     isPublished    BOOL NOT NULL DEFAULT false,
     isTasksNotSorted    BOOL NOT NULL DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS progresses (
-    id           SERIAL PRIMARY KEY,
-    userId       SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    branchId     SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    progress     INT NOT NULL DEFAULT 0,
-    maxProgress  INT NOT NULL DEFAULT 0,
-    isFinished   BOOL NOT NULL DEFAULT FALSE,
-    ratingVote   FLOAT DEFAULT NULL,
-    started      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    finished     TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    id             SERIAL PRIMARY KEY,
+    userId         SERIAL NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    branchId       SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+    progress       INT NOT NULL DEFAULT 0,
+    maxProgress    INT NOT NULL DEFAULT 0,
+    completedTasks INT ARRAY NOT NULL DEFAULT ARRAY[]::INT[],
+    isFinished     BOOL NOT NULL DEFAULT FALSE,
+    ratingVote     FLOAT DEFAULT NULL,
+    started        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    finished       TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     UNIQUE (userId, branchId)
 );
 
@@ -71,10 +72,10 @@ CREATE TABLE IF NOT EXISTS tasks (
     id             SERIAL PRIMARY KEY,
     orderId        SERIAL,
     branchId       SERIAL NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
-    title          TEXT DEFAULT NULL,
-    description    TEXT DEFAULT NULL,
+    title          TEXT NOT NULL DEFAULT '',
+    description    TEXT NOT NULL DEFAULT '',
     question       TEXT DEFAULT NULL,
-    answers        TEXT ARRAY NOT NULL,
+    answers        TEXT ARRAY NOT NULL DEFAULT ARRAY[]::TEXT[],
     isQrAnswer     BOOL NOT NULL DEFAULT false
 );
 

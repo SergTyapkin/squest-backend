@@ -150,7 +150,25 @@ def progressReset(userId):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    resp = DB.execute(sql.updateProgressByUseridBranchid, [0, userId, branchId])
+    resp = DB.execute(sql.resetProgressByUseridBranchid, [userId, branchId])
+    return jsonResponse(resp)
+@app.route("/progress/setmax", methods=["PUT"])
+@login_required_return_id
+def progressSetMax(userId):
+    try:
+        req = request.json
+        branchId = req['branchId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    res, branchData = checkBranchAuthor(branchId, userId, DB, allowHelpers=True)
+    if not res: return branchData
+
+    tasks = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)
+    progress = len(tasks) - 1
+    tasksId = list(map(lambda task: task['id'], tasks))
+
+    resp = DB.execute(sql.setProgressWithTasksByUseridProgressAlltasksidBranchid, [progress, tasksId, userId, branchId])
     return jsonResponse(resp)
 
 

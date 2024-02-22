@@ -304,6 +304,15 @@ selectTasksByBranchid = \
     "WHERE branchid = %s " \
     "ORDER BY orderid"
 
+selectUnfinishedTasksByBranchidUserid = \
+    "SELECT tasks.* FROM progresses " \
+    "JOIN branches ON progresses.branchid = branches.id " \
+    "JOIN tasks ON branches.id = tasks.branchid " \
+    "WHERE branches.id = %s " \
+    "AND userid = %s " \
+    "AND (tasks.id != ALL(progresses.completedTasks) OR ARRAY_LENGTH(progresses.completedTasks, 1) IS NULL) " \
+    "ORDER BY orderid"
+
 selectTasksByPublishedBranchid = \
     "SELECT tasks.id, tasks.title, tasks.description, tasks.question FROM tasks " \
     "JOIN branches ON tasks.branchid = branches.id " \
@@ -316,14 +325,14 @@ selectTaskByBranchidNumber = \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
 
-selectTaskAnswersByBranchidCount = \
-    "SELECT answers FROM tasks " \
+selectTaskByBranchidCount = \
+    "SELECT * FROM tasks " \
     "WHERE branchid = %s " \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
 
-selectTaskAnswersByBranchidTaskid = \
-    "SELECT answers FROM tasks " \
+selectTaskByBranchidTaskid = \
+    "SELECT * FROM tasks " \
     "WHERE branchid = %s " \
     "AND id = %s"
 
@@ -430,13 +439,28 @@ updateHelperByIdQuestid = \
 
 increaseProgressByUseridBranchid = \
     "UPDATE progresses SET " \
-    "progress = progress + 1 " \
+    "progress = progress + 1, " \
+    "completedTasks = %s " \
     "WHERE userId = %s AND branchId = %s " \
     "RETURNING *"
 
 updateProgressByUseridBranchid = \
     "UPDATE progresses SET " \
     "progress = %s " \
+    "WHERE userId = %s AND branchId = %s " \
+    "RETURNING *"
+
+resetProgressByUseridBranchid = \
+    "UPDATE progresses SET " \
+    "progress = 0, " \
+    "completedTasks = ARRAY[]::INTEGER[] " \
+    "WHERE userId = %s AND branchId = %s " \
+    "RETURNING *"
+
+setProgressWithTasksByUseridProgressAlltasksidBranchid = \
+    "UPDATE progresses SET " \
+    "progress = %s, " \
+    "completedTasks = %s " \
     "WHERE userId = %s AND branchId = %s " \
     "RETURNING *"
 

@@ -16,25 +16,29 @@ def tasksGet(userId):
         req = request.args
         taskId = req.get('taskId')
         branchId = req.get('branchId')
+        authorPlayMode = (req.get('authorPlayMode') == 'true')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
-    # Нужно выдать таск по id
+    # Нужно выдать таску по id
     if taskId is not None:
         isAuthor, taskData = checkTaskAuthor(taskId, userId, DB, allowHelpers=True)
         if not isAuthor: return taskData
-
         return jsonResponse(taskData)
     # Нужно выдать все таски ветки
     elif branchId is not None:
         # Можно смотреть только если юзер юзер - автор ветки
         if checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]:
             resp = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
+            if authorPlayMode:
+                resp.pop()
             return jsonResponse({'tasks': resp})
         # Иначе можно смотреть только если юзер играет в эту ветку и в ней несортированые задания. Тогда надо выдать все ещё не пройденные задания
         resp = DB.execute(sql.selectBranchById, [branchId])
         if resp['istasksnotsorted'] is True:
+            print(branchId, userId)
             resp = DB.execute(sql.selectUnfinishedTasksByBranchidUserid, [branchId, userId], manyResults=True)  # можно смотреть не пройденные таски ветки
+            resp.pop()  # Удаляем последеднюю таску с поздравлением
             return jsonResponse({'tasks': resp})
         return jsonResponse("В выбранной ветке нельзя смотреть список всех заданий, и вы не автор квеста", HTTP_NO_PERMISSIONS)
     # Не пришло ни одного id
@@ -45,10 +49,12 @@ def getOrCreateUserProgress(userData):
     resp = DB.execute(sql.selectProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
     try:
         progress = resp['progress']
+        completedTasks = resp['completedtasks']
     except KeyError:  # прогресса нет - надо создать нулевой прогресс
         resp = DB.execute(sql.insertProgress, [userData['id'], userData['chosenbranchid']])
         progress = resp['progress']
-    return progress
+        completedTasks = resp['completedtasks']
+    return [progress, completedTasks]
 
 
 @app.route("/play")
@@ -65,7 +71,7 @@ def tasksGetLast(userData):
     if not isAuthor and ((not questResp['ispublished'] and not questResp['islinkactive']) or not branchResp['ispublished']):
         return jsonResponse("Выбранный квест или ветка не опубликованы, а вы не автор", HTTP_NO_PERMISSIONS)
 
-    progress = getOrCreateUserProgress(userData)
+    [progress, _] = getOrCreateUserProgress(userData)
 
     resp = DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
     # Добавим к ответу названия квеста и ветки, а так же настройки ветки
@@ -100,16 +106,17 @@ def tasksCheckAnswer(userData):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
+    [progress, completedTasks] = getOrCreateUserProgress(userData)
     if taskId is None:
-        progress = getOrCreateUserProgress(userData)
-        task = DB.execute(sql.selectTaskAnswersByBranchidCount, [userData['chosenbranchid'], progress])
+        task = DB.execute(sql.selectTaskByBranchidCount, [userData['chosenbranchid'], progress])
     else:
-        task = DB.execute(sql.selectTaskAnswersByBranchidTaskid, [userData['chosenbranchid'], taskId])
-    print(userData['chosenbranchid'], taskId, task)
+        task = DB.execute(sql.selectTaskByBranchidTaskid, [userData['chosenbranchid'], taskId])
 
     for answer in task['answers']:
         if answer == userAnswer or answer == '*':  # если настроен ответ '*' - принимается любой ответ
-            resp = DB.execute(sql.increaseProgressByUseridBranchid, [userData['id'], userData['chosenbranchid']])
+            if task['id'] not in completedTasks:
+                completedTasks.append(task['id'])
+            resp = DB.execute(sql.increaseProgressByUseridBranchid, [completedTasks, userData['id'], userData['chosenbranchid']])
             return jsonResponse(resp)
 
     return jsonResponse("Ответ неверен", HTTP_ANSWER_MISS)
