@@ -187,7 +187,7 @@ selectPublishedQuestsByAuthorUserid = \
     ")"
 
 selectQuestById = \
-    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, previewUrl, backgroundImageUrl, customCSS, users.username as authorName " \
+    "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, previewUrl, backgroundImageUrl, customCSS, bottomLink, users.username as authorName " \
     "FROM quests LEFT JOIN users ON quests.author = users.id " \
     "WHERE quests.id = %s"
 
@@ -405,7 +405,8 @@ updateQuestById = \
     "isLinkActive = %s, " \
     "previewUrl = %s, " \
     "backgroundImageUrl = %s, " \
-    "customCSS = %s " \
+    "customCSS = %s, " \
+    "bottomLink = %s " \
     "WHERE id = %s " \
     "RETURNING *"
 

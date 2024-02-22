@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS quests (
     isLinkActive   BOOL NOT NULL DEFAULT false,
     previewUrl     TEXT DEFAULT NULL,
     backgroundImageUrl TEXT DEFAULT NULL,
-    customCSS      TEXT DEFAULT NULL
+    customCSS      TEXT DEFAULT NULL,
+    bottomLink     TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS questsHelpers (

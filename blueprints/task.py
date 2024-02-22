@@ -77,6 +77,7 @@ def tasksGetLast(userData):
     # Добавим к ответу названия квеста и ветки, а так же настройки ветки
     resp['questtitle'] = questResp['title']
     resp['customcss'] = questResp['customcss']
+    resp['bottomlink'] = questResp['bottomlink']
     resp['backgroundimageurl'] = questResp['backgroundimageurl']
     resp['branchtitle'] = branchResp['title']
     resp['istasksnotsorted'] = branchResp['istasksnotsorted']
