@@ -4,7 +4,7 @@
     "db_database": "squest-site",
     "db_password": "root",
 
-    "max_image_size": 512,
+    "max_image_size": 1920,
 
     "api_port": "9000",
     "debug": "False",
