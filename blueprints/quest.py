@@ -127,7 +127,7 @@ def questUpdate(userId):
     if previewUrl is None: previewUrl = questData['previewurl']
     if backgroundImageUrl is None: backgroundImageUrl = questData['backgroundimageurl']
     if customCSS is None: customCSS = questData['customcss']
-    if bottomLink is None: bottomLink = questData['bottomlink']
+    if 'bottomLink' not in req: bottomLink = questData['bottomlink']
 
     resp = DB.execute(sql.updateQuestById, [title, description, isPublished, isLinkActive, previewUrl, backgroundImageUrl, customCSS, bottomLink, questId])
     return jsonResponse(resp)
