@@ -27,11 +27,9 @@ def tasksGet(userId):
         return jsonResponse(taskData)
     # Нужно выдать все таски ветки
     elif branchId is not None:
-        # Можно смотреть только если юзер юзер - автор ветки
-        if checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]:
+        # Можно смотреть только если юзер - автор ветки и он не играет в ветку
+        if not authorPlayMode and checkBranchAuthor(branchId, userId, DB, allowHelpers=True)[0]:
             resp = DB.execute(sql.selectTasksByBranchid, [branchId], manyResults=True)  # можно смотреть все ветки квеста
-            if authorPlayMode:
-                resp.pop()
             return jsonResponse({'tasks': resp})
         # Иначе можно смотреть только если юзер играет в эту ветку и в ней несортированые задания. Тогда надо выдать все ещё не пройденные задания
         resp = DB.execute(sql.selectBranchById, [branchId])

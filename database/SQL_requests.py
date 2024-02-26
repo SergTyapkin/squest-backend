@@ -305,7 +305,7 @@ selectTasksByBranchid = \
     "ORDER BY orderid"
 
 selectUnfinishedTasksByBranchidUserid = \
-    "SELECT tasks.* FROM progresses " \
+    "SELECT tasks.id, tasks.orderid, tasks.title, tasks.description, tasks.question, tasks.isqranswer FROM progresses " \
     "JOIN branches ON progresses.branchid = branches.id " \
     "JOIN tasks ON branches.id = tasks.branchid " \
     "WHERE branches.id = %s " \
