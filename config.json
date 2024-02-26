@@ -9,6 +9,9 @@
     "api_port": "9000",
     "debug": "False",
 
+    "api_url": "https://squest-api.herokuapp.com",
+    "frontend_url": "https://squest.fun",
+
     "cors-origins": [
         "http://127.0.0.1",
         "https://127.0.0.1",
