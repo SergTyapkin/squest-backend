@@ -10,15 +10,13 @@
     "debug": "False",
 
     "api_url": "https://squest-api.herokuapp.com",
-    "frontend_url": "https://squest.fun",
+    "frontend_url": "https://squest.online",
 
     "cors-origins": [
         "http://127.0.0.1",
         "https://127.0.0.1",
-        "http://squest.herokuapp.com",
-        "https://squest.herokuapp.com",
-        "http://squest.fun",
-        "https://squest.fun"
+        "http://squest.online",
+        "https://squest.online"
     ],
 
     "SMTP_mail_server_host": "smtp.googlemail.com",
