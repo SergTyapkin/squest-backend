@@ -55,23 +55,23 @@ def getOrCreateUserProgress(userData):
     return [progress, completedTasks]
 
 
-@app.route("/play")
-@login_required
-def tasksGetLast(userData):
-    if userData['chosenbranchid'] is None or userData['chosenquestid'] is None:
-        return jsonResponse("Квест или ветка не выбраны", HTTP_INVALID_DATA)
-
-    questResp = DB.execute(sql.selectQuestById, [userData['chosenquestid']])
+def getPlayTaskFormatted(questId, branchId, userData=None, selectFirstTask=False):
+    questResp = DB.execute(sql.selectQuestById, [questId])
+    branchResp = DB.execute(sql.selectBranchLengthById, [branchId])
     isAuthor = checkQuestAuthor(questResp['id'], userData['id'], DB, allowHelpers=True)[0]
-    branchResp = DB.execute(sql.selectBranchLengthById, [userData['chosenbranchid']])
     # Можно получить только последний таск в выбранной ветке и квесте только если
     # ветка и квест опубликованы или доступны по ссылке или юзер - автор
-    if not isAuthor and ((not questResp['ispublished'] and not questResp['islinkactive']) or not branchResp['ispublished']):
+    if (not isAuthor and selectFirstTask) or (not isAuthor and ((not questResp['ispublished'] and not questResp['islinkactive']) or not branchResp['ispublished'])):
         return jsonResponse("Выбранный квест или ветка не опубликованы, а вы не автор", HTTP_NO_PERMISSIONS)
 
-    [progress, _] = getOrCreateUserProgress(userData)
 
-    resp = DB.execute(sql.selectTaskByBranchidNumber, [userData['chosenbranchid'], progress])
+    if selectFirstTask:
+        resp = DB.execute(sql.selectFirstTaskByQuestId, [questId])
+        resp['progress'] = 0.5
+    else:
+        [progress, _] = getOrCreateUserProgress(userData)
+        resp = DB.execute(sql.selectTaskByBranchidNumber, [branchId, progress])
+        resp['progress'] = progress
     # Добавим к ответу названия квеста и ветки, а так же настройки ветки
     resp['questtitle'] = questResp['title']
     resp['customcss'] = questResp['customcss']
@@ -80,7 +80,6 @@ def tasksGetLast(userData):
     resp['branchtitle'] = branchResp['title']
     resp['istasksnotsorted'] = branchResp['istasksnotsorted']
     # Добавим к ответу прогресс и общую длину ветки
-    resp['progress'] = progress
     if branchResp['length'] == 0:
         return jsonResponse("В ветке нет заданий", 400)
     resp['length'] = max(branchResp['length'] - 1, 0)
@@ -88,11 +87,19 @@ def tasksGetLast(userData):
     resp['canedit'] = isAuthor
 
     # Определим кол-во заданий, и уберем поле question, если задание - последнее
-    maxOrderid = DB.execute(sql.selectTaskMaxOrderidByBranchid, [userData['chosenbranchid']])
+    maxOrderid = DB.execute(sql.selectTaskMaxOrderidByBranchid, [branchId])
     if maxOrderid['maxorderid'] == resp['orderid']:
         del resp['question']
 
     return jsonResponse(resp)
+
+
+@app.route("/play")
+@login_required
+def tasksGetLast(userData):
+    if userData['chosenbranchid'] is None or userData['chosenquestid'] is None:
+        return jsonResponse("Квест или ветка не выбраны", HTTP_INVALID_DATA)
+    return getPlayTaskFormatted(userData['chosenquestid'], userData['chosenbranchid'], userData)
 
 
 @app.route("/play", methods=["POST"])
@@ -119,6 +126,25 @@ def tasksCheckAnswer(userData):
             return jsonResponse(resp)
 
     return jsonResponse("Ответ неверен", HTTP_ANSWER_MISS)
+
+
+@app.route("/example", methods=["GET"])
+@login_and_email_confirmation_required
+def taskGetExample(userData):
+    try:
+        req = request.args
+        questId = req['questId']
+    except:
+        return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
+
+    res, questData = checkQuestAuthor(questId, userData['id'], DB, allowHelpers=True)
+    if not res: return questData
+
+    branchData = DB.execute(sql.selectFirstBranchByQuestid, [questId])
+    if branchData is None:
+        return jsonResponse('У квеста нет ни одной ветки с заданиями', HTTP_NOT_FOUND)
+
+    return getPlayTaskFormatted(questId, branchData['id'], userData, True)
 
 
 @app.route("", methods=["POST"])
@@ -154,6 +180,7 @@ def taskCreateMany(userData):
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
 
+    print(branchId, userData['id'], tasks)
     res, branchData = checkBranchAuthor(branchId, userData['id'], DB, allowHelpers=True)
     if not res: return branchData
 

@@ -256,6 +256,12 @@ selectBranchesByQuestid = \
     "WHERE questId = %s " \
     "ORDER BY orderid"
 
+selectFirstBranchByQuestid = \
+    "SELECT * FROM branches " \
+    "WHERE questId = %s " \
+    "ORDER BY orderid " \
+    "LIMIT 1"
+
 selectBranchById = \
     "SELECT * FROM branches " \
     "WHERE id = %s"
@@ -330,6 +336,14 @@ selectTaskByBranchidCount = \
     "WHERE branchid = %s " \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
+
+selectFirstTaskByQuestId = \
+    "SELECT tasks.* FROM tasks " \
+    "JOIN branches on tasks.branchid = branches.id " \
+    "JOIN quests on branches.questid = quests.id " \
+    "WHERE branchid = %s " \
+    "ORDER BY orderid " \
+    "LIMIT 1"
 
 selectTaskByBranchidTaskid = \
     "SELECT * FROM tasks " \
