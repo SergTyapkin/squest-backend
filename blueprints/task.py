@@ -55,10 +55,12 @@ def getOrCreateUserProgress(userData):
     return [progress, completedTasks]
 
 
-def getPlayTaskFormatted(questId, branchId, userData=None, selectFirstTask=False):
+def getPlayTaskFormatted(questId, branchId, userData=None, selectFirstTask=False, noAuthorCheck=False):
     questResp = DB.execute(sql.selectQuestById, [questId])
     branchResp = DB.execute(sql.selectBranchLengthById, [branchId])
-    isAuthor = checkQuestAuthor(questResp['id'], userData['id'], DB, allowHelpers=True)[0]
+    isAuthor = True
+    if not noAuthorCheck:
+        isAuthor = checkQuestAuthor(questResp['id'], userData['id'], DB, allowHelpers=True)[0]
     # Можно получить только последний таск в выбранной ветке и квесте только если
     # ветка и квест опубликованы или доступны по ссылке или юзер - автор
     if (not isAuthor and selectFirstTask) or (not isAuthor and ((not questResp['ispublished'] and not questResp['islinkactive']) or not branchResp['ispublished'])):
@@ -66,7 +68,7 @@ def getPlayTaskFormatted(questId, branchId, userData=None, selectFirstTask=False
 
 
     if selectFirstTask:
-        resp = DB.execute(sql.selectFirstTaskByQuestId, [questId])
+        resp = DB.execute(sql.selectFirstTaskByBranchid, [branchId])
         resp['orderid'] = 1
         resp['progress'] = 0.5
     else:
@@ -145,7 +147,7 @@ def taskGetExample(userData):
     if branchData is None:
         return jsonResponse('У квеста нет ни одной ветки с заданиями', HTTP_NOT_FOUND)
 
-    return getPlayTaskFormatted(questId, branchData['id'], userData, True)
+    return getPlayTaskFormatted(questId, branchData['id'], userData, True, True)
 
 
 @app.route("", methods=["POST"])

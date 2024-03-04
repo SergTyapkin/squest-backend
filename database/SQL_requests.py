@@ -337,7 +337,7 @@ selectTaskByBranchidCount = \
     "ORDER BY orderid " \
     "OFFSET %s LIMIT 1"
 
-selectFirstTaskByQuestId = \
+selectFirstTaskByBranchid = \
     "SELECT tasks.* FROM tasks " \
     "JOIN branches on tasks.branchid = branches.id " \
     "JOIN quests on branches.questid = quests.id " \
