@@ -67,6 +67,7 @@ def getPlayTaskFormatted(questId, branchId, userData=None, selectFirstTask=False
 
     if selectFirstTask:
         resp = DB.execute(sql.selectFirstTaskByQuestId, [questId])
+        resp['orderid'] = 1
         resp['progress'] = 0.5
     else:
         [progress, _] = getOrCreateUserProgress(userData)
