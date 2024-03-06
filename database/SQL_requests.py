@@ -184,7 +184,8 @@ selectPublishedQuestsByAuthorUserid = \
     "          WHERE userid = %s " \
     "      ) " \
     "   )" \
-    ")"
+    ") " \
+    "ORDER BY createdDate DESC"
 
 selectQuestById = \
     "SELECT quests.id, uid, author, title, description, isPublished, isLinkActive, previewUrl, backgroundImageUrl, customCSS, bottomLink, users.username as authorName " \
@@ -235,16 +236,19 @@ selectEditableQuestsByUseridx2 = \
     "       JOIN users on questshelpers.userid = users.id " \
     "       WHERE userid = %s " \
     "   ) " \
-    ")"
+    ") " \
+    "ORDER BY createdDate DESC"
 
 selectPublishedQuests = \
     "SELECT quests.id, author, title, description, isPublished, isLinkActive, previewUrl, users.username as authorName " \
     "FROM quests JOIN users ON quests.author = users.id " \
-    "WHERE ispublished = True"
+    "WHERE ispublished = True " \
+    "ORDER BY createdDate DESC"
 
 selectPublishedQuestsByUserid = \
     "SELECT id, author, title, description, ispublished FROM quests " \
-    "WHERE isPublished = true OR quests.author = %s"
+    "WHERE isPublished = true OR quests.author = %s " \
+    "ORDER BY createdDate DESC"
 
 selectPublishedBranchesByQuestid = \
     "SELECT * FROM branches " \
