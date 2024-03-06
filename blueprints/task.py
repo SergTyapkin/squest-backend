@@ -119,7 +119,8 @@ def tasksCheckAnswer(userData):
     if taskId is None:
         task = DB.execute(sql.selectTaskByBranchidCount, [userData['chosenbranchid'], progress])
     else:
-        task = DB.execute(sql.selectTaskByBranchidTaskid, [userData['chosenbranchid'], taskId])
+        res, task = checkTaskAuthor(taskId, userData['id'], DB, allowHelpers=True)
+        if not res: return task
 
     for answer in task['answers']:
         if answer == userAnswer or answer == '*':  # если настроен ответ '*' - принимается любой ответ
