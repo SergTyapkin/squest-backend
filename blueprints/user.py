@@ -141,12 +141,19 @@ def userCreate():
         password = req['password']
         email = req.get('email')
         temporaryToQuestId = req.get('temporaryToQuestId')
+        temporaryToQuestUid = req.get('temporaryToQuestUid')
     except:
         return jsonResponse("Не удалось сериализовать json", HTTP_INVALID_DATA)
     if email: email = email.strip().lower()
     username = username.strip()
 
     password = hash_sha256(password)
+
+    if temporaryToQuestUid is not None and temporaryToQuestId is None:
+        questData = DB.execute(sql.selectQuestByUid, [temporaryToQuestUid])
+        if not questData:
+            return jsonResponse("Квеста с таким uid не существует", HTTP_NOT_FOUND)
+        temporaryToQuestId = questData['id']
 
     try:
         resp = DB.execute(sql.insertUser, [username, password, email, name, temporaryToQuestId])
