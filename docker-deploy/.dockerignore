@@ -1,11 +1,21 @@
-### Python template
+venv
+.git
+.gitignore
+.env
+docker*.yml
+.gitlab-ci.yml
+.pre-commit-config.yaml
+
+# IDE
+.idea
+.vscode
+
+
+### All files from .gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Docker compose generated file
-docker-deploy/docker-compose.yaml
 
 # Poetry lock file
 poetry.lock
@@ -129,7 +139,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/

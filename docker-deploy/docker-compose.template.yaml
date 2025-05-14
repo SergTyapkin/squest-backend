@@ -1,0 +1,57 @@
+name: ${BACKEND_COMPOSE_NAME:-backend-compose}
+services:
+  app:
+    container_name: ${APP_CONTAINER_NAME}
+    build:
+      context: ../
+      dockerfile: ./docker-deploy/Dockerfile
+      args:
+        - PYTHON_RELEASE
+    ports:
+      - ${PORT}:9000
+    environment:
+      - PROJECT_NAME
+      - VERSION
+      - DEBUG
+      - PORT
+      - DB_ECHO_LOG
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST=${DB_CONTAINER_NAME}
+      - POSTGRES_PORT
+      - POSTGRES_DB
+    restart: unless-stopped
+    volumes:
+      - ../.env:/app/.env:r
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend-internal
+      - front-back
+
+  db:
+    container_name: ${DB_CONTAINER_NAME}
+    image: postgres:${POSTGRES_RELEASE:-15.3-alpine}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST
+      - POSTGRES_PORT
+      - POSTGRES_DB
+    healthcheck:
+      test: pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data:rwo
+    networks:
+       - backend-internal
+
+networks:
+  backend-internal:
+  front-back:

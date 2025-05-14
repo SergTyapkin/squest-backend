@@ -1,24 +1,17 @@
 {
-    "db_port": 5432,
-    "db_user": "postgres",
-    "db_database": "squest-site",
-    "db_password": "root",
-
     "max_image_size": 1920,
 
     "api_port": "9000",
     "debug": "False",
 
-    "api_url": "https://squest-api.herokuapp.com",
-    "frontend_url": "https://squest.online",
+    "api_url": "https://ssu-it-dep.bmstu.ru:9901",
+    "frontend_url": "https://squest.ssu-it-dep.bmstu.ru",
 
     "cors-origins": [
         "http://127.0.0.1",
         "https://127.0.0.1",
-        "http://squest.fun",
-        "https://squest.fun",
-        "http://squest.online",
-        "https://squest.online"
+        "http://squest.ssu-it-dep.bmstu.ru",
+        "https://squest.ssu-it-dep.bmstu.ru"
     ],
 
     "SMTP_mail_server_host": "smtp.googlemail.com",

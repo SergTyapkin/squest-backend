@@ -25,13 +25,18 @@ def read_config(filepath: str) -> dict:
         file = open(filepath, "r")
         config = json.load(file)
         file.close()
-
         if "db_host" not in config:
-            config["db_host"] = os.environ.get("DATABASE_HOST")
+            config["db_host"] = os.environ.get("POSTGRES_HOST")
             if config["db_host"] is None and "db_url" not in config:
-                config["db_url"] = os.environ["DATABASE_URL"]
+                config["db_url"] = os.environ["POSTGRES_HOST"]
         if "db_password" not in config:
-            config["db_password"] = os.environ["DATABASE_PASSWORD"]
+            config["db_password"] = os.environ["POSTGRES_PASSWORD"]
+        if "db_database" not in config:
+            config["db_database"] = os.environ["POSTGRES_DB"]
+        if "db_port" not in config:
+            config["db_port"] = os.environ["POSTGRES_PORT"]
+        if "db_user" not in config:
+            config["db_user"] = os.environ["POSTGRES_USER"]
 
         if "mail_password" not in config:
             config["mail_password"] = os.environ["MAIL_PASSWORD"]
