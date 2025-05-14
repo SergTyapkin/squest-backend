@@ -13,7 +13,6 @@ services:
       - PROJECT_NAME
       - VERSION
       - DEBUG
-      - PORT
       - DB_ECHO_LOG
       - POSTGRES_USER
       - POSTGRES_PASSWORD
@@ -34,7 +33,7 @@ services:
     container_name: ${DB_CONTAINER_NAME}
     image: postgres:${POSTGRES_RELEASE:-15.3-alpine}
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${DB_PORT}:${POSTGRES_PORT}
     environment:
       - POSTGRES_USER
       - POSTGRES_PASSWORD
