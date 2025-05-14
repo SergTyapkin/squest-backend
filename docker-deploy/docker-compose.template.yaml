@@ -19,6 +19,7 @@ services:
       - POSTGRES_HOST=${DB_CONTAINER_NAME}
       - POSTGRES_PORT
       - POSTGRES_DB
+      - MAIL_PASSWORD
     restart: unless-stopped
     volumes:
       - ../.env:/app/.env:r
