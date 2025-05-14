@@ -1,6 +1,6 @@
 import requests
 
-base_path = "http://127.0.0.1:9000/api"
+base_path = "http://127.0.0.1:9000"
 session = requests.Session()
 
 requests_total = 0
